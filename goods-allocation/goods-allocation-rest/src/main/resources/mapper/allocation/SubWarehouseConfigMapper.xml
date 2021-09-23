@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.SubWarehouseConfigDOMapper" >
+
+    <resultMap id="SubWarehouseConfigResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.SubWarehouseConfigDO" >
+        <result column="id" property="id" />
+        <result column="warehouse_code" property="warehouseCode" />
+        <result column="warehouse_code1" property="warehouseCode1" />
+        <result column="priority" property="priority" />
+        <result column="region" property="region" />
+        <result column="province" property="province" />
+        <result column="city" property="city" />
+        <result column="sale_lv" property="saleLv" />
+        <result column="display_lv" property="displayLv" />
+        <result column="shop_id" property="shopId" />
+        <result column="shop_status" property="shopStatus" />
+        <result column="created_at" property="createdAt" />
+        <result column="created_by" property="createdBy" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="updated_by" property="updatedBy" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+		id, warehouse_code, warehouse_code1, priority, region, province, city, sale_lv, display_lv, shop_id, shop_status, created_at, created_by, updated_at, updated_by
+	</sql>
+
+    <select id="selectByPage" resultMap="SubWarehouseConfigResultMap">
+        select
+          <include refid="Base_Column_List" />
+        from
+          sub_warehouse_config
+        where
+          1=1
+        <if test="priority != null" >
+            and priority in
+            <foreach collection="priority" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="id != null" >
+            and id in
+            <foreach collection="id" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        order by priority
+        <if test="offset != null and pageSize != null" >
+            limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+
+</mapper>

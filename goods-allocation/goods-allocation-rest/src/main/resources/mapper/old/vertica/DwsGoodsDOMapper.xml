@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.old.vertica.dao.DwsDimGoodsDOMapper2" >
+
+  <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.old.vertica.entity.DwsDimGoodsDO" >
+    <result column="MatCode" property="matCode" jdbcType="VARCHAR" />
+    <result column="MatName" property="matName" jdbcType="VARCHAR" />
+    <result column="CategoryCode" property="categoryCode" jdbcType="VARCHAR" />
+    <result column="CategoryName" property="categoryName" jdbcType="VARCHAR" />
+    <result column="MidCategoryCode" property="midCategoryCode" jdbcType="VARCHAR" />
+    <result column="MidCategoryName" property="midCategoryName" jdbcType="VARCHAR" />
+    <result column="SmallCategoryCode" property="smallCategoryCode" jdbcType="VARCHAR" />
+    <result column="SmallCategoryName" property="smallCategoryName" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="selectGoodsList" resultMap="BaseResultMap" >
+      select MatCode,MatName,CategoryCode,CategoryName,MidCategoryCode,MidCategoryName,SmallCategoryCode,SmallCategoryName
+      from dws.dws_dim_goods
+      order by CategoryCode asc;
+  </select>
+
+
+</mapper>

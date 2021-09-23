@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.ExportConfigDOMapper" >
+    <resultMap id="exportConfigDO" type="cn.nome.saas.allocation.repository.entity.allocation.ExportConfigDO">
+        <id property="id" column="id"/>
+        <result property="tplCode" column="tpl_code"/>
+        <result property="tplColumnName" column="tpl_column_name"/>
+        <result property="tplColumnNum" column="tpl_column_num"/>
+        <result property="width" column="width"/>
+        <result property="checkType" column="check_type"/>
+        <result property="tplColumnType" column="tpl_column_type"/>
+        <result property="columnName" column="column_name"/>
+    </resultMap>
+
+    <select id="queryByTplCode" resultMap="exportConfigDO">
+      select id,tpl_code,tpl_column_name,tpl_column_num,width,check_type,tpl_column_type,column_name
+      from export_config  where tpl_code = #{tplCode} and is_enable = 1
+    </select>
+
+    <select id="exeSql" resultType="java.util.Map">
+         ${exeSql}
+    </select>
+</mapper>

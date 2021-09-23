@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.QdIssueConfigDOMapper" >
+
+    <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.QdIssueConfigDO" >
+        <result column="id" property="id" />
+        <result column="type" property="type" />
+        <result column="value" property="name" />
+    </resultMap>
+
+    <select id = "getConfigByType" resultMap="BaseResultMap">
+        select id,type ,value from qd_issue_config where type = #{type}
+    </select>
+
+    <select id = "getConfig" resultMap="BaseResultMap">
+        select id,type ,value from qd_issue_config
+    </select>
+
+    <insert id="insertConfig" parameterType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueConfigDO">
+        insert into qd_issue_config(type,value) values (#{configDO.type},#{configDO.name})
+    </insert>
+
+    <update id="updateConfig" parameterType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueConfigDO">
+        update  qd_issue_config set value=#{configDO.name} where type = #{configDO.type}
+    </update>
+
+</mapper>

@@ -1,0 +1,118 @@
+<!--<?xml version="1.0" encoding="UTF-8" ?>-->
+<!--<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >-->
+<!--<mapper namespace="cn.nome.data.portal.repository.crawler.dao.CrawlerMapper" >-->
+
+  <!--<resultMap id="SearchTask" type="cn.nome.saas.allocation.model.old.crawler.SearchTask" >-->
+    <!--<result column="keyword" property="keyword" jdbcType="VARCHAR" />-->
+    <!--<result column="status" property="status" jdbcType="INTEGER" />-->
+    <!--<result column="created_time" property="createdTime" jdbcType="TIMESTAMP" />-->
+    <!--<result column="userid" property="userid" jdbcType="VARCHAR" />-->
+    <!--<result column="email" property="email" jdbcType="VARCHAR" />-->
+  <!--</resultMap>-->
+
+  <!--<resultMap id="FinishedTask" type="cn.nome.saas.allocation.model.old.crawler.FinishedTask" >-->
+    <!--<result column="keyword" property="keyword" jdbcType="VARCHAR" />-->
+    <!--<result column="status" property="status" jdbcType="INTEGER" />-->
+    <!--<result column="finish_time" property="finishedTime" jdbcType="TIMESTAMP" />-->
+    <!--<result column="created_time" property="createdTime" jdbcType="TIMESTAMP" />-->
+  <!--</resultMap>-->
+
+  <!--<resultMap id="SearchResult" type="cn.nome.saas.allocation.model.old.crawler.SearchResult" >-->
+    <!--<result column="scgs_name" property="productName" jdbcType="VARCHAR" />-->
+    <!--<result column="scgs_product_url" property="productURL" jdbcType="VARCHAR" /> -->
+    <!--<result column="scgs_image_url" property="imageURL" jdbcType="VARCHAR" /> -->
+    <!--<result column="scgs_price" property="price" jdbcType="FLOAT" />-->
+    <!--<result column="scgs_attribute" property="attribute" jdbcType="VARCHAR" />-->
+    <!--<result column="scgs_rank" property="rank" jdbcType="INTEGER" />-->
+    <!--<result column="scgs_sales_total" property="salesQuantity" jdbcType="INTEGER" />-->
+    <!--<result column="scgs_category" property="keyword" jdbcType="VARCHAR" />-->
+    <!--<result column="crawl_time" property="crawlTime" jdbcType="VARCHAR" />-->
+    <!--<result column="scgs_review_count" property="reviewCount" jdbcType="INTEGER" />-->
+    <!--<result column="scgs_reserve_field_6" property="breedCount" jdbcType="INTEGER" />-->
+    <!--<result column="scgs_favornum" property="favorNum" jdbcType="INTEGER" />-->
+  <!--</resultMap>-->
+
+	<!--<select id="get_word_cloud" resultType="String">-->
+	    <!--SELECT data FROM wordcloud where keyword=#{keyword}-->
+	<!--</select>-->
+	<!--<select id="get_search_task" resultMap="SearchTask">-->
+	    <!--SELECT keyword,status,created_time,userid,email FROM search_keyword where keyword=#{keyword}-->
+	<!--</select>-->
+	<!--<select id="get_search_task_list" resultMap="SearchTask">-->
+	    <!--SELECT keyword,status,created_time,userid,email FROM search_keyword order by created_time desc-->
+	<!--</select>-->
+	<!--<select id="get_finished_task" resultMap="FinishedTask">-->
+        <!--SELECT keyword,status,finish_time,created_time FROM search_keyword_seen where keyword=#{keyword} order by finish_time-->
+    <!--</select>-->
+	<!--<select id="get_finished_task_list1" resultMap="FinishedTask">-->
+        <!--SELECT keyword,status,finish_time,created_time FROM search_keyword_seen where status = 1 -->
+    <!--</select>-->
+	<!--<select id="get_finished_task_list2" resultMap="FinishedTask">-->
+        <!--SELECT keyword,status,finish_time,created_time FROM search_keyword_seen where status = 2 order by finish_time desc -->
+    <!--</select>-->
+	<!--<insert id="create_search_task">-->
+		<!--insert into search_keyword(keyword,status,created_time,userid,email) values(#{keyword},0,now(),#{userid},#{email})-->
+	<!--</insert>-->
+	<!--<delete id="cancel_search_task">-->
+		<!--delete from search_keyword where keyword = #{keyword}-->
+	<!--</delete>-->
+	<!--<select id="get_search_result" resultMap="SearchResult">-->
+	    <!--SELECT scgs_name,scgs_product_url,scgs_price,scgs_attribute,scgs_rank,scgs_sales_total,scgs_category,date_format(scgs_crawl_time, '%Y-%m-%d') as crawl_time,scgs_image_url,-->
+	    <!--scgs_review_count,scgs_reserve_field_6,scgs_favornum FROM tb_search where scgs_category = #{keyword} -->
+        <!--<if test="crawl_time != ''">-->
+            <!--and scgs_crawl_time = #{crawl_time}-->
+        <!--</if> -->
+        <!--<if test="crawl_time == ''">-->
+            <!--and scgs_crawl_time = (select max(scgs_crawl_time) from tb_search where scgs_category=#{keyword})-->
+        <!--</if> -->
+        <!--order by scgs_sales_total desc limit #{count}-->
+	<!--</select>-->
+	<!--<select id="get_search_timestamp_for_keyword" resultType="String">-->
+	    <!--SELECT distinct(scgs_crawl_time) FROM tb_search where scgs_category=#{keyword} order by scgs_crawl_time desc-->
+	<!--</select>-->
+	<!---->
+    <!--<select id="getCategoryStatsList" resultType="cn.nome.saas.allocation.model.old.crawler.CategoryStats">-->
+		<!--SELECT scgs_category as categoryName,count(*) as goodsQty,sum(scgs_sales_total*scgs_price) as selesVolume,avg(scgs_price) as goodsAvgPrice from crawler_sku_track_analysis -->
+		<!--where scgs_platform_id=#{req.platformId,jdbcType=VARCHAR} and scgs_shop_id=#{req.shopId,jdbcType=VARCHAR} and scgs_crawl_time=#{req.date,jdbcType=VARCHAR}-->
+		<!--group by scgs_category-->
+	<!--</select>-->
+    <!--<select id="getDateList" resultType="cn.nome.saas.allocation.model.old.crawler.Shop">-->
+		<!--SELECT crawl_time as date,shop_name as shopName from crawler_sku_track_date-->
+		<!--where platform_id=#{req.platformId,jdbcType=VARCHAR} and shop_id=#{req.shopId,jdbcType=VARCHAR}-->
+		<!--order by date desc-->
+	<!--</select>-->
+	<!--<select id="getShopList" resultType="cn.nome.saas.allocation.model.old.crawler.Shop">-->
+		<!--SELECT-->
+		<!--shop_name as shopName,-->
+		<!--shop_id as shopId,-->
+		<!--platform_name as platformName,-->
+		<!--platform_id as platformId,-->
+		<!--img_url as imgUrl-->
+		<!--from shopIndex-->
+	<!--</select>-->
+    <!--<select id="getPriceZoneList" resultType="cn.nome.saas.allocation.model.old.crawler.PriceZone">-->
+		<!--SELECT x as price, y as qty from price_interval-->
+		<!--where platform_id=#{req.platformId,jdbcType=VARCHAR} and shop_id=#{req.shopId,jdbcType=VARCHAR} and crawl_time=#{req.date,jdbcType=VARCHAR}-->
+		<!--<if test="req.category != null" > and category = #{req.category,jdbcType=VARCHAR}</if>-->
+	<!--</select>-->
+	<!---->
+    <!--<select id="getTopSaleGoods" resultType="cn.nome.saas.allocation.model.old.crawler.TopSale">-->
+		<!--SELECT-->
+		<!--scgs_brand as brand,-->
+		<!--scgs_image_url as imageURL,-->
+		<!--scgs_name as productName,-->
+		<!--scgs_product_url as productURL,-->
+		<!--scgs_price as price,-->
+		<!--scgs_attribute as attribute,-->
+		<!--max(scgs_sales_total) as salesQuantity,-->
+		<!--scgs_shop_name as shopName,-->
+		<!--scgs_crawl_time as crawlTime-->
+		<!--from crawler_sku_track_analysis-->
+		<!--where scgs_platform_id=#{req.platformId,jdbcType=VARCHAR} and scgs_shop_id=#{req.shopId,jdbcType=VARCHAR} and scgs_crawl_time=#{req.date,jdbcType=VARCHAR}-->
+		<!--<if test="req.category != null" > and scgs_category = #{req.category,jdbcType=VARCHAR}</if>-->
+		<!--group by brand, imageURL, productName, productURL, price, attribute, shopName, crawlTime-->
+		<!--order by salesQuantity desc limit #{req.count,jdbcType=VARCHAR}-->
+	<!--</select>-->
+	<!---->
+	<!---->
+<!--</mapper>-->

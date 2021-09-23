@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.ApsIssueInStockDataMapper" >
+    <select id="getIssueInStockList" resultType="cn.nome.saas.allocation.model.issue.NewIssueInStockDo">
+        SELECT
+            categoryName,
+            midCategoryName,
+            categoryCode,
+            shopId,
+            matCode,
+            avgSaleQty,
+            stockQty,
+            pathStockQty,
+            sizeName,
+            moveQty,
+            quotePrice,
+            yearNo,
+            seasonName,
+            isEliminate,
+            saleQty28,
+            saleQty7
+        FROM
+            aps_issue_in_stock_data
+        WHERE
+            1=1
+        <if test="shopIds != null">
+            <foreach collection="shopIds" open="and shopId in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+    </select>
+</mapper>

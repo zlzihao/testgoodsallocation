@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.ShopExpressDOMapper" >
+
+    <resultMap id="expressResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.ShopExpressDO" >
+        <result column="shop_id_a" property="shopIdA" />
+        <result column="shop_id_b" property="shopIdB"  />
+        <result column="shipping_fee" property="shippingFree"/>
+        <result column="addShipping_fee" property="addShippingFree" />
+        <result column="spendDays" property="shippingDays"/>
+    </resultMap>
+
+    <select id="getShopExpressList" resultMap="expressResultMap">
+        select shop_id_1 AS shop_id_a, shop_id_2 AS shop_id_b,shipping_fee,addShipping_fee,spendDays
+        from shop_express
+        WHERE shop_id_1 in (
+        <foreach collection="listA" item="shopA" index="index" separator=",">
+            '${shopA}'
+        </foreach>
+        ) and shop_id_2 in (
+        <foreach collection="listB" item="shopB" index="index" separator=",">
+            '${shopB}'
+        </foreach>
+        )
+        UNION ALL
+        select shop_id_1 AS shop_id_a, shop_id_2 AS shop_id_b,shipping_fee,addShipping_fee,spendDays
+        from shop_express
+        WHERE shop_id_1 in (
+        <foreach collection="listB" item="shopB" index="index" separator=",">
+            '${shopB}'
+        </foreach>
+        ) and shop_id_2 in (
+        <foreach collection="listA" item="shopA" index="index" separator=",">
+            '${shopA}'
+        </foreach>
+        )
+
+    </select>
+
+    <select id="getShopExpressListByPage" resultMap="expressResultMap" parameterType="java.util.Map">
+        select shop_id_1 AS shop_id_a, shop_id_2 AS shop_id_b,shipping_fee,addShipping_fee,spendDays
+        from shop_express
+        limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <delete id="deleteNextExpress">
+        delete from new_shop_express
+    </delete>
+
+    <select id="loadAllNexExpress" resultType="cn.nome.saas.allocation.model.rule.NewExpress">
+        select from_ as fromCity,to_ as toCity,shipping as shipping,addShipping as addShipping,
+              20kgShipping as shipping20kg,bigAddShipping as addShipping20kg,spendTime as spendTime
+        from nsf_express where limitTypeName = '顺丰标快'
+    </select>
+
+    <insert id="insertNewExpressData">
+        INSERT INTO new_shop_express(province_1,city_1,province_2,city_2,shipping_fee,add_shipping_fee,20kg_shipping_fee,big_add_shipping_fee,spend_days,created_at)
+        <foreach collection="list" item="item" open="VALUES" separator=",">
+            (#{item.province1},#{item.city1},#{item.province2},#{item.city2},
+             #{item.shippingFee},#{item.addShippingFee},#{item.shippingFee20kg},#{item.bigAddShippingFee},#{item.spendDays},now())
+        </foreach>
+
+    </insert>
+    
+    <select id="selectNewExpressByProvince" resultType="cn.nome.saas.allocation.model.rule.NewShopExpress">
+        select province_1 AS province1,city_1 AS city1,province_2 AS province2,city_2 AS city2,shipping_fee AS shippingFee,
+        add_shipping_fee AS addShippingFee,20kg_shipping_fee AS shippingFee20kg,big_add_shipping_fee AS bigAddShippingFee,spend_days AS spendDays
+        from new_shop_express
+        <if test="list != null" >
+        where province_1 in (
+            <foreach collection="list" item="province" index="index" separator=",">
+                '${province}'
+            </foreach>
+        ) or province_2 in (
+            <foreach collection="list" item="province" index="index" separator=",">
+                '${province}'
+            </foreach>
+        )
+        </if>
+    </select>
+
+</mapper>

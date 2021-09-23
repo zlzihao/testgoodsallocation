@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.IssueTaskDOMapper" >
+
+
+    <insert id="addTask" useGeneratedKeys="true" keyColumn="id" keyProperty="task.id" parameterType="cn.nome.saas.allocation.repository.entity.allocation.IssueTaskDO">
+        insert into issue_task_new(name,task_status,task_type,run_time,created_at,updated_at,remark,operator,ready) values
+        (#{task.name},#{task.taskStatus},#{task.taskType},#{task.runTime},#{task.createdAt},#{task.updatedAt},#{task.remark},#{task.operator},#{task.ready})
+    </insert>
+
+    <update id="updateTaskStatus">
+		UPDATE issue_task_new SET task_status = 1,updated_at = now() WHERE id = #{taskId}
+	</update>
+
+</mapper>

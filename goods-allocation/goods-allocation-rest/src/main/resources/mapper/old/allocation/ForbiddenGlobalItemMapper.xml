@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.old.allocation.dao.ForbiddenGlobalItemDOMapper2" >
+
+
+    <resultMap id="ForbiddenGlobalItemResultMap" type="cn.nome.saas.allocation.model.old.forbiddenRule.ForbiddenGlobalItem" >
+        <id property="id" column="id"/>
+        <result column="f_rule_id" property="fRuleId"  />
+        <result column="region_include" property="regionInclude"  />
+        <result column="province_include" property="provinceInclude"  />
+        <result column="city_include" property="cityInclude"  />
+        <result column="shop_include" property="shopInclude"  />
+        <result column="large_include" property="largeInclude"  />
+        <result column="middle_include" property="middleInclude"  />
+        <result column="small_include" property="smallInclude"  />
+        <result column="sale_lv_include" property="saleLvInclude"  />
+        <result column="display_lv_include" property="displayLvInclude"  />
+        <result column="skc_include" property="skcInclude"  />
+        <result column="sku_include" property="skuInclude"  />
+        <result column="region_exclude" property="regionExclude"  />
+        <result column="province_exclude" property="provinceExclude"  />
+        <result column="city_exclude" property="cityExclude"  />
+        <result column="shop_exclude" property="shopExclude"  />
+        <result column="large_exclude" property="largeExclude"  />
+        <result column="middle_exclude" property="middleExclude"  />
+        <result column="small_exclude" property="smallExclude"  />
+        <result column="sale_lv_exclude" property="saleLvExclude"  />
+        <result column="display_lv_exclude" property="displayLvExclude"  />
+        <result column="skc_exclude" property="skcExclude"  />
+        <result column="sku_exclude" property="skuExclude"  />
+
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+		id, f_rule_id,
+		region_include, province_include, city_include, shop_include, large_include, middle_include, small_include, sale_lv_include, display_lv_include,
+		skc_include, sku_include,
+		region_exclude, province_exclude, city_exclude, shop_exclude, large_exclude, middle_exclude, small_exclude, sale_lv_exclude, display_lv_exclude,
+		skc_exclude, sku_exclude
+	</sql>
+
+
+
+    <select id="selectByFRuleId" resultMap="ForbiddenGlobalItemResultMap" parameterType="java.lang.Integer">
+        select
+          <include refid="Base_Column_List" />
+        from
+          forbidden_global_item
+        where
+          f_rule_id = #{fRuleId}
+    </select>
+
+    <insert id="insertSelective"  useGeneratedKeys="true" keyProperty="id"  parameterType="cn.nome.saas.allocation.model.old.forbiddenRule.ForbiddenGlobalItem" >
+        insert into forbidden_global_item
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="fRuleId != null" >
+                f_rule_id,
+            </if>
+            <if test="regionInclude != null" >
+                region_include,
+            </if>
+            <if test="provinceInclude != null" >
+                province_include,
+            </if>
+            <if test="cityInclude != null" >
+                city_include,
+            </if>
+            <if test="shopInclude != null" >
+                shop_include,
+            </if>
+            <if test="largeInclude != null" >
+                large_include,
+            </if>
+            <if test="middleInclude != null" >
+                middle_include,
+            </if>
+            <if test="smallInclude != null" >
+                small_include,
+            </if>
+             <if test="saleLvInclude != null" >
+                 sale_lv_include,
+            </if>
+             <if test="displayLvInclude != null" >
+                 display_lv_include,
+            </if>
+              <if test="skcInclude != null" >
+                  skc_include,
+            </if>
+            <if test="skuInclude != null" >
+                  sku_include,
+            </if>
+            <if test="regionExclude != null" >
+                region_exclude,
+            </if>
+            <if test="provinceExclude != null" >
+                province_exclude,
+            </if>
+            <if test="cityExclude != null" >
+                city_exclude,
+            </if>
+            <if test="shopExclude != null" >
+                shop_exclude,
+            </if>
+            <if test="largeExclude != null" >
+                large_exclude,
+            </if>
+            <if test="middleExclude != null" >
+                middle_exclude,
+            </if>
+            <if test="smallExclude != null" >
+                small_exclude,
+            </if>
+            <if test="saleLvExclude != null" >
+                sale_lv_exclude,
+            </if>
+            <if test="displayLvExclude != null" >
+                display_lv_exclude,
+            </if>
+            <if test="skcExclude != null" >
+                skc_exclude,
+            </if>
+            <if test="skuExclude != null" >
+                sku_exclude,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="fRuleId != null" >
+                #{fRuleId},
+            </if>
+            <if test="regionInclude != null" >
+                #{regionInclude},
+            </if>
+            <if test="provinceInclude != null" >
+                #{provinceInclude},
+            </if>
+            <if test="cityInclude != null" >
+                #{cityInclude},
+            </if>
+            <if test="shopInclude != null" >
+                #{shopInclude},
+            </if>
+            <if test="largeInclude != null" >
+                #{largeInclude},
+            </if>
+            <if test="middleInclude != null" >
+                #{middleInclude},
+            </if>
+            <if test="smallInclude != null" >
+                #{smallInclude},
+            </if>
+            <if test="saleLvInclude != null" >
+                #{saleLvInclude},
+            </if>
+            <if test="displayLvInclude != null" >
+                #{displayLvInclude},
+            </if>
+            <if test="skcInclude != null" >
+                #{skcInclude},
+            </if>
+            <if test="skuInclude != null" >
+                #{skuInclude},
+            </if>
+            <if test="regionExclude != null" >
+                #{regionExclude},
+            </if>
+            <if test="provinceExclude != null" >
+                #{provinceExclude},
+            </if>
+             <if test="cityExclude != null" >
+                #{cityExclude},
+            </if>
+            <if test="shopExclude != null" >
+                #{shopExclude},
+            </if>
+            <if test="largeExclude != null" >
+                #{largeExclude},
+            </if>
+            <if test="middleExclude != null" >
+                #{middleExclude},
+            </if>
+            <if test="smallExclude != null" >
+                #{smallExclude},
+            </if>
+            <if test="saleLvExclude != null" >
+                #{saleLvExclude},
+            </if>
+            <if test="displayLvExclude != null" >
+                #{displayLvExclude},
+            </if>
+             <if test="skcExclude != null" >
+                #{skcExclude},
+            </if>
+             <if test="skuExclude != null" >
+                #{skuExclude},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByFRuleId" parameterType="cn.nome.saas.allocation.model.old.forbiddenRule.ForbiddenGlobalItem">
+        update forbidden_global_item
+        <set>
+            <if test="regionInclude != null" >
+                region_include = #{regionInclude},
+            </if>
+            <if test="provinceInclude != null" >
+                province_include = #{provinceInclude},
+            </if>
+            <if test="cityInclude != null" >
+                city_include = #{cityInclude},
+            </if>
+            <if test="shopInclude != null" >
+                shop_include = #{shopInclude},
+            </if>
+            <if test="largeInclude != null" >
+                large_include = #{largeInclude},
+            </if>
+            <if test="middleInclude != null" >
+                middle_include = #{middleInclude},
+            </if>
+            <if test="smallInclude != null" >
+                small_include = #{smallInclude},
+            </if>
+            <if test="saleLvInclude != null" >
+                sale_lv_include = #{saleLvInclude},
+            </if>
+            <if test="displayLvInclude != null" >
+                display_lv_include = #{displayLvInclude},
+            </if>
+            <if test="skcInclude != null" >
+                skc_include = #{skcInclude},
+            </if>
+            <if test="skuInclude != null" >
+                sku_include = #{skuInclude},
+            </if>
+            <if test="regionExclude != null" >
+                region_exclude = #{regionExclude},
+            </if>
+            <if test="provinceExclude != null" >
+                province_exclude = #{provinceExclude},
+            </if>
+            <if test="cityExclude != null" >
+                city_exclude = #{cityExclude},
+            </if>
+            <if test="shopExclude != null" >
+                shop_exclude = #{shopExclude},
+            </if>
+            <if test="largeExclude != null" >
+                large_exclude = #{largeExclude},
+            </if>
+            <if test="middleExclude != null" >
+                middle_exclude = #{middleExclude},
+            </if>
+            <if test="smallExclude != null" >
+                small_exclude = #{smallExclude},
+            </if>
+            <if test="saleLvExclude != null" >
+                sale_lv_exclude = #{saleLvExclude},
+            </if>
+            <if test="displayLvExclude != null" >
+                display_lv_exclude = #{displayLvExclude},
+            </if>
+            <if test="skcExclude != null" >
+                skc_exclude = #{skcExclude},
+            </if>
+            <if test="skuExclude != null" >
+                sku_exclude = #{skuExclude},
+            </if>
+        </set>
+        where f_rule_id = #{fRuleId}
+    </update>
+
+    <delete id="deleteByFRuleId" parameterType="java.lang.Integer">
+        delete from forbidden_global_item where f_rule_id = #{fRuleId}
+    </delete>
+
+
+
+</mapper>

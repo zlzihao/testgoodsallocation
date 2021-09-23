@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.NewGoodsIssueRangeDetailMapper">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO" id="BaseResultMap">
+    	<id property="id" column="id"/>
+        <result property="rangeId" column="range_id"/>
+        <result property="shopCode" column="shop_code"/>
+        <result property="shopId" column="shop_id"/>
+		<result property="num" column="num"/>
+		<result property="saleTime" column="sale_time"/>
+        <result property="planFlag" column="plan_flag"/>
+        <result property="issueFin" column="issue_fin"/>
+    </resultMap>
+	<sql id="Base_Column_List" >
+		id, range_id, shop_id, shop_code, num, plan_flag, issue_fin,sale_time
+	</sql>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" >
+		select 
+	    <include refid="Base_Column_List" />
+	    from new_goods_issue_range_detail
+		where id = #{id}
+	</select>
+	<select id="selectByRangeId" resultMap="BaseResultMap" >
+		select
+		<include refid="Base_Column_List" />
+		from new_goods_issue_range_detail
+		where range_id = #{rangeId}
+		<if test="planFlag != null" >
+			and plan_flag = #{planFlag}
+		</if>
+	</select>
+
+    <select id="selectByIssueFin" resultMap="BaseResultMap" >
+        select
+        <include refid="Base_Column_List" />
+        from new_goods_issue_range_detail
+        where range_id = #{rangeId}
+        <if test="issueFin != null" >
+            and issue_fin = #{issueFin}
+        </if>
+    </select>
+
+    <select id="selectByShopCode" resultMap="BaseResultMap" >
+    select
+    <include refid="Base_Column_List" />
+    from new_goods_issue_range_detail
+    where range_id = #{rangeId}
+    <if test="shopCode != null" >
+        and shop_code = #{shopCode}
+    </if>
+	</select>
+
+	<select id="getNotSaleTime" resultType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO" >
+		<![CDATA[
+			select
+				ird.shop_id shopId, ir.mat_code matCode, ir.size_name sizeName, si.IssueTime, si.RoadDay
+			from new_goods_issue_range_detail ird
+			left join new_goods_issue_range ir on ird.range_id = ir.id
+			left join shop_info si on ird.shop_id = si.ShopID
+			left join (
+				select ir.mat_code, ird.shop_id, max(idp.arrive_date) maxArriveDate from new_goods_issue_range ir
+				left join new_goods_issue_range_detail ird on ir.id = ird.range_id and ird.plan_flag = 1
+				left join issue_day_period idp on idp.shop_id = ird.shop_id and DATEDIFF(arrive_date, ird.sale_time) <= 0
+				GROUP BY ird.shop_id) shopArrive
+			on ird.shop_id = shopArrive.shop_id and shopArrive.mat_code = ir.mat_code
+			where ird.plan_flag = 1 and ird.issue_fin = 0
+			and DATEDIFF(DATE_ADD(DATE_ADD(NOW(), INTERVAL + si.RoadDay DAY), INTERVAL + 1 DAY), shopArrive.maxArriveDate) < 0
+		]]>
+	</select>
+
+	<select id="getIssueNumBySaleTime" resultType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO">
+		<![CDATA[
+			select
+				ird.shop_id shopId, ir.mat_code matCode, ir.size_name sizeName, ird.num num, ird.sale_time saleTime, si.RoadDay, si.IssueTime
+			from new_goods_issue_range_detail ird
+			left join new_goods_issue_range ir on ird.range_id = ir.id
+			left join shop_info si on ird.shop_id = si.ShopID
+			left join (
+				select ir.mat_code, ird.shop_id, max(idp.arrive_date) maxArriveDate from new_goods_issue_range ir
+				left join new_goods_issue_range_detail ird on ir.id = ird.range_id and ird.plan_flag = 1
+				left join issue_day_period idp on idp.shop_id = ird.shop_id and DATEDIFF(arrive_date, ird.sale_time) <= 0
+				GROUP BY ird.shop_id) shopArrive
+			on ird.shop_id = shopArrive.shop_id and shopArrive.mat_code = ir.mat_code
+			where ird.plan_flag = 1 and ird.issue_fin = 0
+			and DATEDIFF(DATE_ADD(DATE_ADD(NOW(), INTERVAL + si.RoadDay DAY), INTERVAL + 1 DAY), shopArrive.maxArriveDate) >= 0
+		]]>
+	</select>
+
+	<delete id="deleteByPrimaryKey" >
+	    delete from new_goods_issue_range_detail
+		where id = #{id}
+	</delete>
+	<insert id="batchInsert" parameterType="java.util.ArrayList">
+		insert into new_goods_issue_range_detail
+		(range_id, shop_id, shop_code, num, plan_flag, issue_fin,sale_time)
+		values
+		<foreach collection="list" item="item" index="index" separator=",">
+			(#{item.rangeId},#{item.shopId}, #{item.shopCode}, #{item.num}, #{item.planFlag},#{item.issueFin},#{item.saleTime})
+		</foreach>
+	</insert>
+	<insert id="insertSelective"  parameterType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO" >
+    	insert into new_goods_issue_range_detail
+    	<trim prefix="(" suffix=")" suffixOverrides="," >
+	        <if test="rangeId != null" >
+		        range_id,
+			</if>
+	        <if test="shopCode != null" >
+		        shop_code,
+			</if>
+			<if test="shopId != null" >
+				shop_id,
+			</if>
+	        <if test="num != null" >
+		        num,
+			</if>
+	        <if test="planFlag != null" >
+		        plan_flag,
+			</if>
+	        <if test="issueFin != null" >
+				issue_fin,
+			</if>
+			<if test="saleTime != null" >
+				sale_time,
+			</if>
+		</trim>
+	    <trim prefix="values (" suffix=")" suffixOverrides="," >
+	        <if test="rangId != null" >
+		        #{rangId},
+			</if>
+	        <if test="shopCode != null" >
+		        #{shopCode},
+			</if>
+	        <if test="num != null" >
+		        #{num},
+			</if>
+	        <if test="planFlag != null" >
+		        #{planFlag},
+			</if>
+			<if test="issueFin != null" >
+		        #{issueFin},
+			</if>
+			<if test="saleTime != null" >
+				#{saleTime},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO" >
+		update new_goods_issue_range_detail
+	    <set >
+		    <if test="rangeId != null" >
+		        range_id = #{rangeId},
+		    </if>
+		    <if test="shopCode != null" >
+		        shop_code = #{shopCode},
+		    </if>
+			<if test="shopId != null" >
+				shop_id = #{shopId},
+		    </if>
+		    <if test="num != null" >
+		        num = #{num},
+		    </if>
+		    <if test="planFlag != null" >
+		        plan_flag = #{planFlag},
+		    </if>
+			<if test="issueFin != null" >
+				issue_fin = #{issueFin},
+		    </if>
+	    </set>
+	    where id = #{id}
+	</update>
+	<sql id="wherePageList">
+  		<where>
+		    <if test="req.id != null" >
+		        and id = #{req.id}
+		    </if>
+			<if test="req.rangeId != null" >
+		        and range_id = #{req.rangeId}
+		    </if>
+		    <if test="req.shopCode != null" >
+		        and shop_code = #{req.shopCode}
+		    </if>
+			<if test="req.shopId != null" >
+		        and shop_id = #{req.shopId}
+		    </if>
+		    <if test="req.num != null" >
+		        and num = #{req.num}
+		    </if>
+		    <if test="req.planFlag != null" >
+		        and plan_flag = #{req.planFlag}
+		    </if>
+			<if test="req.issueFin != null" >
+		        and issue_fin = #{req.issueFin}
+		    </if>
+		</where>
+	</sql>
+
+	<select id="pageCount" resultType="Integer" >
+	    select count(*)
+	    from new_goods_issue_range_detail
+	    <include refid="wherePageList" />
+	</select>
+
+	<select id="shopCount" resultType="Integer" >
+		select count(*)
+		from new_goods_issue_range_detail
+		where
+		range_id in
+			<foreach collection="list" item="req" index="index" open="(" close=")" separator=",">
+				#{req.id}
+			</foreach>
+			and plan_flag = 1 and issue_fin = 1
+	</select>
+
+
+	<select id="pageList" resultMap="BaseResultMap" >
+	    select 
+	    <include refid="Base_Column_List" />
+	    from new_goods_issue_range_detail
+	    <include refid="wherePageList" />
+	    <if test="page != null">
+	    	limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+	    </if>
+	</select>
+
+	<delete id="delByRangeId" >
+		delete from
+			new_goods_issue_range_detail
+		where
+			range_id = #{rangeId}
+		<if test="planFlag != null" >
+			and plan_flag = #{planFlag}
+		</if>
+	</delete>
+
+	<!--<delete id="delByRangeIdWithFin" >
+		delete from
+		new_goods_issue_range_detail
+		where
+		range_id = #{rangeId}
+		<if test="issueFin != null" >
+			and issue_fin = #{issueFin}
+		</if>
+	</delete>-->
+
+	<delete id="delByMatCodeWithFin" >
+		delete from
+			new_goods_issue_range_detail
+		where
+		range_id in (select id from new_goods_issue_range where mat_code = #{matCode})
+		<if test="issueFin != null" >
+			and issue_fin = #{issueFin}
+		</if>
+	</delete>
+
+	<select id="selectNewGoodsWhiteList" resultType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO" >
+		select
+			ird.shop_id shopId, ir.mat_code matCode, ir.size_name sizeName
+		from new_goods_issue_range_detail ird
+		left join new_goods_issue_range ir on ird.range_id = ir.id
+		where ird.plan_flag = 0
+	</select>
+
+	<select id="selectNewGoodsList" resultType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDetailDO" >
+		select
+			ir.mat_code matCode, ir.size_name sizeName, ird.shop_id shopId, ird.sale_time saleTime, ird.num, dws.shopName
+		from new_goods_issue_range_detail ird
+		left join new_goods_issue_range ir on ird.range_id = ir.id
+		left join dws_dim_shop dws on dws.shopId = ird.shop_id
+		where 1=1
+		<if test="planFlag != null" >
+			and ird.plan_flag = #{planFlag}
+		</if>
+		<if test="rangeId != null" >
+			and ir.id = #{rangeId}
+		</if>
+	</select>
+
+</mapper>

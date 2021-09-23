@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.MinSecuritySkcDOMapper" >
+
+    <resultMap id="minSecuritySkcResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.MinSecuritySkcDO">
+        <result column="type" property="type" />
+        <result column="type_value" property="typeValue" />
+        <result column="qty" property="qty" />
+    </resultMap>
+
+    <select id="getMinSecuritySkcList" resultMap="minSecuritySkcResultMap">
+        select type,type_value,qty from min_security_skc where type = 1
+    </select>
+
+</mapper>

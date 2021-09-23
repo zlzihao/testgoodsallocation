@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.QdIssueCategoryStructureDOMapper" >
+
+
+    <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.QdIssueCategoryStructureDO" >
+        <result column="region_name" property="regionName" />
+        <result column="month" property="month" />
+        <result column="category_name" property="categoryName" />
+        <result column="mid_category_name" property="midCategoryName" />
+        <result column="match_type" property="matchType" />
+        <result column="business_percent" property="businessPercent" />
+        <result column="avg_price" property="avgPrice" />
+        <result column="depth" property="depth" />
+        <result column="skc_percent" property="skcPercent" />
+
+    </resultMap>
+
+    <select id = "getQdIssueCategoryStructureDOList" resultMap="BaseResultMap">
+        select * from qd_issue_category_structure
+    </select>
+
+    <select id = "queryByIdDeal" resultMap="BaseResultMap">
+        select * from qd_issue_category_structure where is_deal = 0 order by updated_at  limit 0,#{limitNum}
+    </select>
+
+    <update id="batchUpdateInfo">
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            UPDATE qd_issue_category_structure
+            <set>
+                <if test="item.avgPrice != null">
+                    avg_price = #{item.avgPrice},
+                </if>
+                <if test="item.depth != null">
+                    depth = #{item.depth},
+                </if>
+                <if test="item.skcPercent != null">
+                    skc_percent = #{item.skcPercent},
+                </if>
+                <if test="item.isDeal != null">
+                    is_deal = #{item.isDeal},
+                </if>
+                <if test="item.remark != null">
+                    remark = #{item.remark},
+                </if>
+            </set>
+            <where>
+                id = #{item.id}
+            </where>
+        </foreach>
+    </update>
+
+    <select id="countForDealStatus" resultType="java.lang.Integer">
+        select count(*) from qd_issue_category_structure where is_deal = #{isDeal}
+    </select>
+
+    <select id = "queryAllByIsDeal" resultMap="BaseResultMap">
+        select * from qd_issue_category_structure where is_deal = #{isDeal}
+    </select>
+
+    <select id="queryHaveDealData"  resultMap="BaseResultMap">
+         select * from qd_issue_category_structure where is_deal = 1 and region_name = #{regionName} and category_name = #{categoryName}
+    </select>
+</mapper>

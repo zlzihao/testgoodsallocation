@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.NewGoodsIssueRangeMapper">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDO" id="BaseResultMap">
+    	<id property="id" column="id"/>
+        <result property="matCode" column="mat_code"/>
+        <result property="matName" column="mat_name"/>
+        <result property="sizeId" column="size_id"/>
+        <result property="sizeName" column="size_name"/>
+        <result property="issueFin" column="issue_fin"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="invalidAt" column="invalid_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="regionInclude" column="region_include"/>
+        <result property="provinceInclude" column="province_include"/>
+        <result property="cityInclude" column="city_include"/>
+        <result property="saleLvInclude" column="sale_lv_include"/>
+        <result property="shopIdInclude" column="shop_id_include"/>
+        <result property="displayLvInclude" column="display_lv_include"/>
+        <result property="regionExclude" column="region_exclude"/>
+        <result property="provinceExclude" column="province_exclude"/>
+        <result property="cityExclude" column="city_exclude"/>
+        <result property="saleLvExclude" column="sale_lv_exclude"/>
+        <result property="displayLvExclude" column="display_lv_exclude"/>
+        <result property="shopIdExclude" column="shop_id_exclude"/>
+        <result property="attrVal1In" column="attr_val_1_include"/>
+        <result property="attrVal2In" column="attr_val_2_include"/>
+        <result property="attrVal3In" column="attr_val_3_include"/>
+        <result property="attrVal4In" column="attr_val_4_include"/>
+        <result property="attrVal5In" column="attr_val_5_include"/>
+		<result property="attrVal1Ex" column="attr_val_1_exclude"/>
+		<result property="attrVal2Ex" column="attr_val_2_exclude"/>
+		<result property="attrVal3Ex" column="attr_val_3_exclude"/>
+		<result property="attrVal4Ex" column="attr_val_4_exclude"/>
+		<result property="attrVal5Ex" column="attr_val_5_exclude"/>
+    </resultMap>
+	<sql id="Base_Column_List" >
+		id, mat_code, mat_name, size_id, size_name, issue_fin, created_at, invalid_at, updated_at, updated_by, region_include, province_include, city_include, sale_lv_include, shop_id_include, display_lv_include, region_exclude, province_exclude, city_exclude, sale_lv_exclude, display_lv_exclude, shop_id_exclude, 
+		attr_val_1_include, attr_val_2_include, attr_val_3_include, attr_val_4_include, attr_val_5_include, attr_val_1_exclude, attr_val_2_exclude, attr_val_3_exclude, attr_val_4_exclude, attr_val_5_exclude
+	</sql>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" >
+		select 
+	    <include refid="Base_Column_List" />
+	    from new_goods_issue_range
+		where id = #{id}
+	</select>
+	<select id="selectByIssueFin" resultMap="BaseResultMap" >
+		select
+		<include refid="Base_Column_List" />
+		from new_goods_issue_range
+		where issue_fin = #{issueFin}
+	</select>
+	<select id="selectByMatCodeSizeId" resultMap="BaseResultMap" >
+		select
+		<include refid="Base_Column_List" />
+		from new_goods_issue_range
+		where mat_code = #{matCode} and size_id = #{sizeId}
+	</select>
+
+	<select id="selectByMatCodeSizeName" resultMap="BaseResultMap" >
+		select
+		<include refid="Base_Column_List" />
+		from new_goods_issue_range
+		where mat_code = #{matCode} and size_name = #{sizeName}
+	</select>
+
+	<delete id="deleteByPrimaryKey" >
+	    delete from new_goods_issue_range
+		where id = #{id}
+	</delete>
+	<insert id="insertSelective" useGeneratedKeys="true" keyProperty="id"  parameterType="cn.nome.saas.allocation.repository.entity.allocation.NewGoodsIssueRangeDO" >
+    	insert into new_goods_issue_range
+    	<trim prefix="(" suffix=")" suffixOverrides="," >
+	        <if test="matCode != null" >
+		        mat_code,
+			</if>
+	        <if test="matName != null" >
+		        mat_name,
+			</if>
+	        <if test="sizeId != null" >
+		        size_id,
+			</if>
+	        <if test="sizeName != null" >
+		        size_name,
+			</if>
+	        <if test="issueFin != null" >
+		        issue_fin,
+			</if>
+	        <if test="createdAt != null" >
+		        created_at,
+			</if>
+	        <if test="invalidAt != null" >
+		        invalid_at,
+			</if>
+	        <if test="updatedAt != null" >
+		        updated_at,
+			</if>
+	        <if test="updatedBy != null" >
+		        updated_by,
+			</if>
+	        <if test="regionInclude != null" >
+		        region_include,
+			</if>
+	        <if test="provinceInclude != null" >
+		        province_include,
+			</if>
+	        <if test="cityInclude != null" >
+		        city_include,
+			</if>
+	        <if test="saleLvInclude != null" >
+		        sale_lv_include,
+			</if>
+	        <if test="shopIdInclude != null" >
+		        shop_id_include,
+			</if>
+	        <if test="displayLvInclude != null" >
+		        display_lv_include,
+			</if>
+	        <if test="regionExclude != null" >
+		        region_exclude,
+			</if>
+	        <if test="provinceExclude != null" >
+		        province_exclude,
+			</if>
+	        <if test="cityExclude != null" >
+		        city_exclude,
+			</if>
+	        <if test="saleLvExclude != null" >
+		        sale_lv_exclude,
+			</if>
+	        <if test="displayLvExclude != null" >
+		        display_lv_exclude,
+			</if>
+	        <if test="shopIdExclude != null" >
+		        shop_id_exclude,
+			</if>
+		</trim>
+	    <trim prefix="values (" suffix=")" suffixOverrides="," >
+	        <if test="matCode != null" >
+		        #{matCode},
+			</if>
+	        <if test="matName != null" >
+		        #{matName},
+			</if>
+	        <if test="sizeId != null" >
+		        #{sizeId},
+			</if>
+	        <if test="sizeName != null" >
+		        #{sizeName},
+			</if>
+	        <if test="issueFin != null" >
+		        #{issueFin},
+			</if>
+	        <if test="createdAt != null" >
+		        #{createdAt},
+			</if>
+	        <if test="invalidAt != null" >
+		        #{invalidAt},
+			</if>
+	        <if test="updatedAt != null" >
+		        #{updatedAt},
+			</if>
+	        <if test="updatedBy != null" >
+		        #{updatedBy},
+			</if>
+	        <if test="regionInclude != null" >
+		        #{regionInclude},
+			</if>
+	        <if test="provinceInclude != null" >
+		        #{provinceInclude},
+			</if>
+	        <if test="cityInclude != null" >
+		        #{cityInclude},
+			</if>
+	        <if test="saleLvInclude != null" >
+		        #{saleLvInclude},
+			</if>
+	        <if test="shopIdInclude != null" >
+		        #{shopIdInclude},
+			</if>
+	        <if test="displayLvInclude != null" >
+		        #{displayLvInclude},
+			</if>
+	        <if test="regionExclude != null" >
+		        #{regionExclude},
+			</if>
+	        <if test="provinceExclude != null" >
+		        #{provinceExclude},
+			</if>
+	        <if test="cityExclude != null" >
+		        #{cityExclude},
+			</if>
+	        <if test="saleLvExclude != null" >
+		        #{saleLvExclude},
+			</if>
+	        <if test="displayLvExclude != null" >
+		        #{displayLvExclude},
+			</if>
+	        <if test="shopIdExclude != null" >
+		        #{shopIdExclude},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="cn.nome.saas.allocation.model.old.allocation.NewGoodsIssueRangeReq" >
+		update new_goods_issue_range
+	    <set >
+		    <if test="req.matCode != null" >
+		        mat_code = #{req.matCode},
+		    </if>
+		    <if test="req.matName != null" >
+		        mat_name = #{req.matName},
+		    </if>
+		    <if test="req.sizeId != null" >
+		        size_id = #{req.sizeId},
+		    </if>
+		    <if test="req.sizeName != null" >
+		        size_name = #{req.sizeName},
+		    </if>
+		    <if test="req.issueFin != null" >
+		        issue_fin = #{req.issueFin},
+		    </if>
+		    <if test="req.createdAt != null" >
+		        created_at = #{req.createdAt},
+		    </if>
+		    <if test="req.invalidAt != null" >
+		        invalid_at = #{req.invalidAt},
+		    </if>
+		    <if test="req.updatedAt != null" >
+		        updated_at = #{req.updatedAt},
+		    </if>
+		    <if test="req.updatedBy != null" >
+		        updated_by = #{req.updatedBy},
+		    </if>
+		    <if test="req.regionInclude != null" >
+		        region_include = #{req.regionInclude},
+		    </if>
+		    <if test="req.provinceInclude != null" >
+		        province_include = #{req.provinceInclude},
+		    </if>
+		    <if test="req.cityInclude != null" >
+		        city_include = #{req.cityInclude},
+		    </if>
+		    <if test="req.saleLvInclude != null" >
+		        sale_lv_include = #{req.saleLvInclude},
+		    </if>
+		    <if test="req.shopIdInclude != null" >
+		        shop_id_include = #{req.shopIdInclude},
+		    </if>
+		    <if test="req.displayLvInclude != null" >
+		        display_lv_include = #{req.displayLvInclude},
+		    </if>
+		    <if test="req.regionExclude != null" >
+		        region_exclude = #{req.regionExclude},
+		    </if>
+		    <if test="req.provinceExclude != null" >
+		        province_exclude = #{req.provinceExclude},
+		    </if>
+		    <if test="req.cityExclude != null" >
+		        city_exclude = #{req.cityExclude},
+		    </if>
+		    <if test="req.saleLvExclude != null" >
+		        sale_lv_exclude = #{req.saleLvExclude},
+		    </if>
+		    <if test="req.displayLvExclude != null" >
+		        display_lv_exclude = #{req.displayLvExclude},
+		    </if>
+		    <if test="req.shopIdExclude != null" >
+		        shop_id_exclude = #{req.shopIdExclude},
+		    </if>
+			<if test="req.attrVal1In != null" >
+				attr_val_1_include = #{req.attrVal1In},
+			</if>
+			<if test="req.attrVal2In != null" >
+				attr_val_2_include = #{req.attrVal2In},
+			</if>
+			<if test="req.attrVal3In != null" >
+				attr_val_3_include = #{req.attrVal3In},
+			</if>
+			<if test="req.attrVal4In != null" >
+				attr_val_4_include = #{req.attrVal4In},
+			</if>
+			<if test="req.attrVal5In != null" >
+				attr_val_5_include = #{req.attrVal5In},
+			</if>
+			<if test="req.attrVal1Ex != null" >
+				attr_val_1_exclude = #{req.attrVal1Ex},
+			</if>
+			<if test="req.attrVal2Ex != null" >
+				attr_val_2_exclude = #{req.attrVal2Ex},
+			</if>
+			<if test="req.attrVal3Ex != null" >
+				attr_val_3_exclude = #{req.attrVal3Ex},
+			</if>
+			<if test="req.attrVal4Ex != null" >
+				attr_val_4_exclude = #{req.attrVal4Ex},
+			</if>
+			<if test="req.attrVal5Ex != null" >
+				attr_val_5_exclude = #{req.attrVal5Ex},
+			</if>
+	    </set>
+		<include refid="whereUpdate" />
+
+	</update>
+
+	<sql id="whereUpdate">
+	<where>
+		<if test="req.id != null" >
+			and id = #{req.id}
+		</if>
+	</where>
+	</sql>
+
+	<update id="updateByMatCodeSizeId" parameterType="cn.nome.saas.allocation.model.old.allocation.NewGoodsIssueRangeReq" >
+		update new_goods_issue_range
+	    <set >
+		    <if test="req.matName != null" >
+		        mat_name = #{req.matName},
+		    </if>
+		    <if test="req.sizeName != null" >
+		        size_name = #{req.sizeName},
+		    </if>
+		    <if test="req.issueFin != null" >
+		        issue_fin = #{req.issueFin},
+		    </if>
+		    <if test="req.createdAt != null" >
+		        created_at = #{req.createdAt},
+		    </if>
+		    <if test="req.invalidAt != null" >
+		        invalid_at = #{req.invalidAt},
+		    </if>
+		    <if test="req.updatedAt != null" >
+		        updated_at = #{req.updatedAt},
+		    </if>
+		    <if test="req.updatedBy != null" >
+		        updated_by = #{req.updatedBy},
+		    </if>
+		    <if test="req.regionInclude != null" >
+		        region_include = #{req.regionInclude},
+		    </if>
+		    <if test="req.provinceInclude != null" >
+		        province_include = #{req.provinceInclude},
+		    </if>
+		    <if test="req.cityInclude != null" >
+		        city_include = #{req.cityInclude},
+		    </if>
+		    <if test="req.saleLvInclude != null" >
+		        sale_lv_include = #{req.saleLvInclude},
+		    </if>
+		    <if test="req.shopIdInclude != null" >
+		        shop_id_include = #{req.shopIdInclude},
+		    </if>
+		    <if test="req.displayLvInclude != null" >
+		        display_lv_include = #{req.displayLvInclude},
+		    </if>
+		    <if test="req.regionExclude != null" >
+		        region_exclude = #{req.regionExclude},
+		    </if>
+		    <if test="req.provinceExclude != null" >
+		        province_exclude = #{req.provinceExclude},
+		    </if>
+		    <if test="req.cityExclude != null" >
+		        city_exclude = #{req.cityExclude},
+		    </if>
+		    <if test="req.saleLvExclude != null" >
+		        sale_lv_exclude = #{req.saleLvExclude},
+		    </if>
+		    <if test="req.displayLvExclude != null" >
+		        display_lv_exclude = #{req.displayLvExclude},
+		    </if>
+		    <if test="req.shopIdExclude != null" >
+		        shop_id_exclude = #{req.shopIdExclude},
+		    </if>
+			<if test="req.sizeId != null" >
+				size_id = #{req.sizeId},
+			</if>
+	    </set>
+	    where mat_code = #{req.matCode} and size_id = #{req.sizeId}
+	</update>
+
+	<update id="updateByMatCodeSizeName" parameterType="cn.nome.saas.allocation.model.old.allocation.NewGoodsIssueRangeReq" >
+		update new_goods_issue_range
+		<set >
+			<if test="req.matName != null" >
+				mat_name = #{req.matName},
+			</if>
+			<if test="req.sizeId != null" >
+				size_id = #{req.sizeId},
+			</if>
+			<if test="req.issueFin != null" >
+				issue_fin = #{req.issueFin},
+			</if>
+			<if test="req.createdAt != null" >
+				created_at = #{req.createdAt},
+			</if>
+			<if test="req.invalidAt != null" >
+				invalid_at = #{req.invalidAt},
+			</if>
+			<if test="req.updatedAt != null" >
+				updated_at = #{req.updatedAt},
+			</if>
+			<if test="req.updatedBy != null" >
+				updated_by = #{req.updatedBy},
+			</if>
+			<if test="req.regionInclude != null" >
+				region_include = #{req.regionInclude},
+			</if>
+			<if test="req.provinceInclude != null" >
+				province_include = #{req.provinceInclude},
+			</if>
+			<if test="req.cityInclude != null" >
+				city_include = #{req.cityInclude},
+			</if>
+			<if test="req.saleLvInclude != null" >
+				sale_lv_include = #{req.saleLvInclude},
+			</if>
+			<if test="req.shopIdInclude != null" >
+				shop_id_include = #{req.shopIdInclude},
+			</if>
+			<if test="req.displayLvInclude != null" >
+				display_lv_include = #{req.displayLvInclude},
+			</if>
+			<if test="req.regionExclude != null" >
+				region_exclude = #{req.regionExclude},
+			</if>
+			<if test="req.provinceExclude != null" >
+				province_exclude = #{req.provinceExclude},
+			</if>
+			<if test="req.cityExclude != null" >
+				city_exclude = #{req.cityExclude},
+			</if>
+			<if test="req.saleLvExclude != null" >
+				sale_lv_exclude = #{req.saleLvExclude},
+			</if>
+			<if test="req.displayLvExclude != null" >
+				display_lv_exclude = #{req.displayLvExclude},
+			</if>
+			<if test="req.shopIdExclude != null" >
+				shop_id_exclude = #{req.shopIdExclude},
+			</if>
+		</set>
+		where mat_code = #{req.matCode} and size_name = #{req.sizeName}
+	</update>
+
+
+	<sql id="wherePageList">
+  		<where>
+		    <if test="req.id != null" >
+		        and id = #{req.id}
+		    </if>
+			<if test="req.matCode != null" >
+		        and mat_code like concat('%', #{req.matCode}, '%')
+		    </if>
+		    <if test="req.matName != null" >
+		        and mat_name like concat('%', #{req.matName}, '%')
+		    </if>
+		    <if test="req.sizeId != null" >
+		        and size_id like concat('%', #{req.sizeId}, '%')
+		    </if>
+		    <!--<if test="req.sizeName != null" >
+		        and size_name = #{req.sizeName}
+		    </if>-->
+		    <!--<if test="req.issueFin != null" >
+		        and issue_fin = #{req.issueFin}
+		    </if>-->
+		    <!--<if test="req.createdAt != null" >
+		        and created_at = #{req.createdAt}
+		    </if>
+		    <if test="req.invalidAt != null" >
+		        and invalid_at = #{req.invalidAt}
+		    </if>
+		    <if test="req.updatedAt != null" >
+		        and updated_at = #{req.updatedAt}
+		    </if>-->
+			<if test="req.noSizeId != null" >
+				and size_id IS NULL or size_id = ""
+			</if>
+		    <if test="req.updatedBy != null" >
+		        and updated_by like concat('%', #{req.updatedBy}, '%')
+		    </if>
+			<if test="req.updatedAtStr != null" >
+				and updated_at like concat('%', #{req.updatedAtStr}, '%')
+			</if>
+			<if test="req.createdStart != null and req.createdEnd != null" >
+				and created_at between #{req.createdStart} and #{req.createdEnd}
+			</if>
+			<if test="req.validFlag != null and req.validFlag == 1" >
+				and invalid_at <![CDATA[>=]]> now()
+			</if>
+			<if test="req.validFlag != null and req.validFlag == 2" >
+				and invalid_at <![CDATA[<]]> now()
+			</if>
+		</where>
+	</sql>
+
+	<select id="pageCount" resultType="Integer" >
+	    select count(*)
+	    from new_goods_issue_range
+	    <include refid="wherePageList" />
+	</select>
+  
+	<select id="pageList" resultMap="BaseResultMap" >
+	    select 
+	    <include refid="Base_Column_List" />
+	    from new_goods_issue_range
+	    <include refid="wherePageList" />
+		<if test="req.offset != null and req.pageSize != null" >
+	    	limit #{req.offset,jdbcType=INTEGER}, #{req.pageSize,jdbcType=INTEGER}
+	    </if>
+	</select>
+</mapper>

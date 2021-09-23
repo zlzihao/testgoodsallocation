@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.QdIssueDetailDOMapper" >
+
+    <insert id="batchInsertIssueDetail" useGeneratedKeys="true" keyProperty="id" parameterType="java.util.List" >
+        insert into qd_issue_detail
+        (task_id,shop_id,category_name,mid_category_name,mat_code,size_id,size_name,stock_qty,path_qty,apply_qty,demand_qty,qty,issue_order,area_total,province_total,shop_total,created_at)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskId},#{item.shopId},#{item.categoryName},#{item.midCategoryName},#{item.matCode},#{item.sizeId},#{item.sizeName},#{item.stockQty},#{item.pathQty},#{item.applyQty},#{item.demandQty},#{item.qty},#{item.order},#{item.areaTotal},#{item.provinceTotal},#{item.shopTotal},now())
+        </foreach>
+
+    </insert>
+
+    <delete id="deleteIssueDetail" parameterType="java.lang.Integer">
+        DELETE FROM qd_issue_detail where task_id = #{taskId}
+    </delete>
+
+
+</mapper>

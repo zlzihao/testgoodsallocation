@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.old.allocation.dao.IssueOperateLogMapper2">
+
+    <insert id="saveLog" parameterType="cn.nome.saas.allocation.model.old.issue.OperateLog">
+        insert into issue_operate_log(task_id,shop_id,mat_code,size_id,content,operate_type,operator)
+        values(#{operateLog.taskId},#{operateLog.shopId},#{operateLog.matCode},#{operateLog.sizeId},#{operateLog.content},#{operateLog.operateType},#{operateLog.operator})
+    </insert>
+
+</mapper>

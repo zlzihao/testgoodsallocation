@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.vertical.DwsSaleStockMoveDDOMapper" >
+
+  <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.entity.vertical.DwsSaleStockMoveDDO" >
+      <result column="BillDate" property="billDate"  />
+      <result column="ShopID" property="shopID"  />
+      <result column="ShopCode" property="shopCode"  />
+      <result column="MatCode" property="matCode"  />
+      <result column="sizeID" property="sizeID"  />
+      <result column="SizeName" property="sizeName"  />
+      <result column="normalQty" property="normalQty"  />
+      <result column="otherQty" property="otherQty"  />
+      <result column="normalAmt" property="normalAmt"  />
+      <result column="otherAmt" property="otherAmt"  />
+      <result column="totalQty" property="totalQty"  />
+      <result column="totalAmt" property="totalAmt"  />
+      <result column="StockQty" property="stockQty"  />
+      <result column="pathstockQty" property="pathstockQty"  />
+      <result column="moveQty" property="moveQty"  />
+
+  </resultMap>
+
+
+    <select id="selectByParam" resultMap="BaseResultMap" >
+            select * from dws.dws_saleStockMove_d where BillDate = to_char(CURRENT_DATE - 1,'YYYY-MM-DD')  and ShopID = #{ShopId} and MatCode = #{MatCode} and SizeName = #{SizeName};
+    </select>
+
+
+</mapper>

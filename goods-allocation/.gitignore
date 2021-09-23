@@ -1,0 +1,7 @@
+.idea
+.DS_Store
+*.iml
+.project
+config-cache
+goods-allocation-api/target/
+goods-allocation-rest/target/

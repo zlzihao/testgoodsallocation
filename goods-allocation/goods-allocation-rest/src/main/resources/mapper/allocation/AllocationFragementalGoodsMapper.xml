@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.AllocationFragementalGoodsMapper" >
+
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id" parameterType="java.util.List" >
+
+        insert into allocation_fragmental_goods
+        (
+          task_id,shop_id,shop_name,shop_level,city_name,min_display_qty,mat_code,mat_name,category_code,size_id,
+        size_code,size_name,bar_code,quote_price,sum_sale_qty,avg_sale_qty,apply_stock_qty,stock_qty,path_stock_qty,
+        safe_stock_qty,ideal_stock_qty,demand_stock_qty,supply_stock_qty,allocation_stock_qty,remain_stock_qty,forbidden_flag
+        )
+        values
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.taskId},#{record.shopId},#{record.shopName},#{record.shopLevel},#{record.cityName},#{record.minDisplayQty},#{record.matCode},
+            #{record.matName},#{record.categoryCode},#{record.sizeId},#{record.sizeCode},#{record.sizeName},#{record.batCode},#{record.quotePrice},#{record.sumSaleQty},
+            #{record.avgSaleQty},#{record.applyStockQty},#{record.stockQty},#{record.pathStockQty},#{record.safeStockQty},#{record.idealStockQty},
+            #{record.demandStockQty},#{record.supplyStockQty},#{record.alloctionStockQty},#{record.remainStockQty},#{record.forbiddenFlag}
+            )
+        </foreach>
+
+    </insert>
+
+    <delete id="deleteByParam" parameterType="java.lang.Integer">
+        DELETE FROM allocation_fragmental_goods
+        where 1 = 1
+        <if test="taskId != null">
+            and task_id = #{taskId}
+        </if>
+    </delete>
+
+    <update id="batchUpdate" parameterType="java.util.List">
+
+        <foreach collection="list" item="record" index="index" open="" close="" separator=";">
+            update allocation_fragmental_goods
+            <set>
+                allocation_stock_qty = #{record.alloctionStockQty},
+                remain_stock_qty = #{record.remainStockQty},
+                updated_at = now()
+            </set>
+            where shop_id = #{record.shopId} and mat_code = #{record.matCode} and size_id = #{record.sizeId} and task_id = #{record.taskId}
+        </foreach>
+
+    </update>
+
+
+</mapper>

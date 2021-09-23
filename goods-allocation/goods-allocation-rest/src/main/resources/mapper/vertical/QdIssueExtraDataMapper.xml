@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.vertical.QdIssueExtraDataMapper" >
+
+    <select id="getGoodsInfo" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdGoodsInfoDO">
+        select a.MatCode as matCode,a.SizeID as sizeId,b.SizeName as sizeName,a.BarCode as barCode
+        from dwd.dwd_goods_material_size a,dwd.dwd_base_mat_size b
+        where 1 = 1
+        and a.sizeID = b.sizeID and b.EtlDate = date(now()) - 1
+        <foreach collection="matCodeList" open="and a.MatCode in ("  close=")" separator="," item="matCode">
+            #{matCode}
+        </foreach>
+    </select>
+
+    <!-- 需求池 (门店库存、在途库存)-->
+    <select id="getQdIssueInStockList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueInStockDO" >
+        select shopID as shopId,MatCode as matCode, SizeID as sizeId ,SizeName as sizeName ,sum(StockQty) stockQty,sum(PathStockQty) as pathQty
+        from dws.dws_stok_sku_d
+        where OperationDate= date(now())-1
+        and StockQty > 0
+        <foreach collection="shopIdList" open="and shopID in ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        <foreach collection="matCodeList" open="and MatCode in ("  close=")" separator="," item="matCode">
+            #{matCode}
+        </foreach>
+        group by shopID,MatCode, SizeID,SizeName
+    </select>
+
+    <!-- 需求池 (在配库存)-->
+    <select id="getQdApplyQtyList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueInStockDO" >
+
+        select ShopID as shopId,MatCode as matCode,sizeID as sizeId,moveQty as applyQty from dws.dws_saleStockMove_d
+        where date(billdate)= date(now())-1 and moveQty > 0
+        <foreach collection="matCodeList" open="and MatCode in ("  close=")" separator="," item="matCode">
+            #{matCode}
+        </foreach>
+    </select>
+
+
+    <!-- 供给池 -->
+    <select id="getQdIssueOutStockList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueOutStockDO" >
+         select MatCode as matCode, SizeID as sizeId ,sum(StockQty) stockQty,sum(PathStockQty) as pathQty
+         from dws.dws_stok_sku_d
+         where stockID ='NM001275' and OperationDate= date(now())-1
+          <foreach collection="matCodeList" open="and MatCode in ("  close=")" separator="," item="matCode">
+            #{matCode}
+          </foreach>
+         group by MatCode, SizeID having sum(StockQty)>0
+    </select>
+
+    <select id="getMidCategorySalesList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueSkcStockDO">
+            select s.shopId,g.MidCategoryName AS midCategoryName,s.MatCode AS matCode
+            from dws.dws_stok_sku_d s,dws.dws_dim_goods g
+            where s.OperationDate= date(now())-1 and s.MatCode = g.MatCode
+            and g.CategoryCode in ('W','M')
+            <if test="seasonList != null">
+                <foreach collection="seasonList" open="and g.seasonName in ("  close=")" separator="," item="season">
+                    #{season}
+                </foreach>
+            </if>
+            group by s.shopId,g.MidCategoryName,s.MatCode having sum(s.StockQty) >= 5
+            order by s.shopId,g.MidCategoryName
+    </select>
+
+    <select id="getMidCategoryPathList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueSkcStockDO">
+            select s.shopId,g.MidCategoryName AS midCategoryName,s.MatCode AS matCode
+            from dws.dws_stok_sku_d s,dws.dws_dim_goods g
+            where s.OperationDate= date(now())-1 and s.MatCode = g.MatCode and s.PathStockQty > 0
+            and g.CategoryCode in ('W','M')
+            <if test="seasonList != null">
+                <foreach collection="seasonList" open="and g.seasonName in ("  close=")" separator="," item="season">
+                    #{season}
+                </foreach>
+            </if>
+            group by s.shopId,g.MidCategoryName,s.MatCode
+            order by s.shopId,g.MidCategoryName
+    </select>
+
+    <select id="getMidCategoryApplyList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueSkcStockDO">
+        select s.shopId,g.MidCategoryName AS midCategoryName,s.MatCode AS matCode
+        from dws.dws_saleStockMove_d s,dws.dws_dim_goods g
+        where date(s.billdate)= date(now())-1 and s.MatCode = g.MatCode and s.moveQty > 0
+        and g.CategoryCode in ('W','M')
+        <if test="seasonList != null">
+            <foreach collection="seasonList" open="and g.seasonName in ("  close=")" separator="," item="season">
+                #{season}
+            </foreach>
+        </if>
+        group by s.shopId,g.MidCategoryName,s.MatCode
+        order by s.shopId,g.MidCategoryName
+    </select>
+
+    <select id="getShopSalesList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueNewSkcStockDO">
+            select distinct s.shopId,s.MatCode AS matCode
+            from dws.dws_stok_sku_d s,dws.dws_dim_goods g
+            where s.OperationDate= date(now())-1 and s.MatCode = g.MatCode
+            and g.CategoryCode in ('W','M')
+            <if test="seasonList != null">
+                <foreach collection="seasonList" open="and g.seasonName in ("  close=")" separator="," item="season">
+                    #{season}
+                </foreach>
+            </if>
+            and s.StockQty > 0 and s.shopId is not null
+            order by s.shopId
+    </select>
+
+    <select id="getShopPathList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueNewSkcStockDO">
+            select distinct s.shopId,s.MatCode AS matCode
+            from dws.dws_stok_sku_d s,dws.dws_dim_goods g
+            where s.OperationDate= date(now())-1 and s.MatCode = g.MatCode
+            and g.CategoryCode in ('W','M')
+            <if test="seasonList != null">
+                <foreach collection="seasonList" open=" and g.seasonName in ("  close=")" separator="," item="season">
+                    #{season}
+                </foreach>
+            </if>
+            and s.PathStockQty > 0  and s.shopId is not null
+            order by s.shopId
+    </select>
+
+    <select id="getShopApplyList" resultType="cn.nome.saas.allocation.repository.entity.allocation.QdIssueNewSkcStockDO">
+        select distinct s.shopId,s.MatCode AS matCode
+        from dws.dws_saleStockMove_d s,dws.dws_dim_goods g
+        where date(s.billdate)= date(now())-1 and s.MatCode = g.MatCode and s.moveQty > 0
+        and g.CategoryCode in ('W','M')  and s.shopId is not null
+        <if test="seasonList != null">
+        <foreach collection="seasonList" open="and g.seasonName in ("  close=")" separator="," item="season">
+            #{season}
+        </foreach>
+        </if>
+        order by s.shopId
+    </select>
+
+
+</mapper>

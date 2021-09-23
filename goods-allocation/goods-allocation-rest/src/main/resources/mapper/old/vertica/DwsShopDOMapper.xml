@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.old.vertica.dao.DwsShopDOMapper2" >
+  <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.old.vertica.entity.DwsShopDO" >
+    <result column="Province" property="province" jdbcType="VARCHAR" />
+    <result column="City" property="city" jdbcType="VARCHAR" />
+    <result column="Town" property="town" jdbcType="VARCHAR" />
+    <result column="ShopName" property="shopname" jdbcType="VARCHAR" />
+    <result column="ShopOpenDate" property="shopopendate" jdbcType="DATE" />
+    <result column="ShopArea" property="shoparea" jdbcType="NUMERIC" />
+    <result column="ShopCode" property="shopcode" jdbcType="VARCHAR" />
+    <result column="StokArea" property="stokarea" jdbcType="NUMERIC" />
+    <result column="ShopSingleManger" property="shopsinglemanger" jdbcType="VARCHAR" />
+    <result column="ShopManger" property="shopmanger" jdbcType="VARCHAR" />
+    <result column="ShopOpenStatus" property="shopopenstatus" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="StoreSalesData" type="cn.nome.saas.allocation.model.old.StoreSalesData" >
+    <result column="ShopID" property="shop_id" jdbcType="NUMERIC" />
+    <result column="ItemCount" property="item_count" jdbcType="NUMERIC" />
+    <result column="AvgSaleAmt" property="avg_sale_amt" jdbcType="NUMERIC" />
+  </resultMap>
+
+  <resultMap id="OldStoreData" type="cn.nome.saas.allocation.model.old.OldStoreData" >
+    <result column="shopid" property="shopid" jdbcType="VARCHAR" />
+    <result column="shopname" property="shop_name" jdbcType="VARCHAR" />
+    <result column="address" property="location" jdbcType="VARCHAR" />
+    <result column="shoparea" property="store_acreage" jdbcType="FLOAT" />
+    <result column="shoplevelname" property="store_aim" jdbcType="VARCHAR" />
+    <result column="openshopdate" property="open_shop_date" jdbcType="DATE" />
+    <result column="shopproperty" property="business_nature" jdbcType="VARCHAR" />
+    <result column="operatemode" property="store_type" jdbcType="VARCHAR" />
+    <result column="shopage" property="site_type" jdbcType="VARCHAR" />
+  </resultMap>
+
+
+  <resultMap id="DimShopResultMap" type="cn.nome.saas.allocation.repository.old.vertica.entity.DwsDimShopDO" >
+    <result column="ShopCode" property="shopCode" jdbcType="VARCHAR" />
+    <result column="ShopID" property="shopId" jdbcType="VARCHAR" />
+    <result column="ShopName" property="shopName" jdbcType="VARCHAR" />
+    <result column="RegioneNO" property="regioneNo" jdbcType="VARCHAR" />
+    <result column="RegioneBusName" property="regioneBusName" jdbcType="VARCHAR" />
+    <result column="SubRegioneBusName" property="subRegioneBusName" jdbcType="VARCHAR" />
+    <result column="ProvinceID" property="provinceId" jdbcType="VARCHAR" />
+    <result column="ProvinceCode" property="provinceCode" jdbcType="VARCHAR" />
+    <result column="ProvinceName" property="provinceName" jdbcType="VARCHAR" />
+    <result column="CityID" property="cityId" jdbcType="VARCHAR" />
+    <result column="CityCode" property="cityCode" jdbcType="VARCHAR" />
+    <result column="CityName" property="cityName" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="selectAllShopList" resultMap="DimShopResultMap" >
+     select ShopCode,ShopID,ShopName,RegioneNO,RegioneBusName,SubRegioneBusName,ProvinceID,
+        ProvinceCode,ProvinceName,CityID,CityCode,CityName
+        from dws.dws_dim_shop
+        where RegioneBusName is not null
+        order by ProvinceID ASC
+  </select>
+
+  <select id="selectStoreSalesList" resultMap="StoreSalesData">
+    select ShopID, count(SaleAmt) as ItemCount, avg(SaleAmt) as AvgSaleAmt from dws.dws_sale_shop_d where OperationDate &lt;= #{end_date,jdbcType=VARCHAR} 
+    and OperationDate &gt;= #{start_date,jdbcType=VARCHAR} group by ShopID having count(SaleAmt) > 90
+  </select>
+
+  <select id="selectOldStoresByShopIdList" resultMap="OldStoreData">
+    select shopid,shopname,address,shoparea,shoplevelname,openshopdate,shopproperty,operatemode,shopage from dws.dws_dim_shop where shopid in
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+        #{item}
+    </foreach>
+    order by shopid
+  </select>
+
+  <select id="selectAllOldStores" resultMap="OldStoreData">
+    select shopid,shopname,address,shoparea,shoplevelname,openshopdate,shopproperty,operatemode,shopage from dws.dws_dim_shop order by shopid
+  </select>
+
+  <insert id="insert" parameterType="cn.nome.saas.allocation.repository.old.vertica.entity.DwsShopDO" >
+    insert into dws_shop (Province, City, Town, 
+      ShopName, ShopOpenDate, ShopArea, 
+      ShopCode, StokArea, ShopSingleManger, 
+      ShopManger, ShopOpenStatus)
+    values (#{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{town,jdbcType=VARCHAR}, 
+      #{shopname,jdbcType=VARCHAR}, #{shopopendate,jdbcType=DATE}, #{shoparea,jdbcType=NUMERIC}, 
+      #{shopcode,jdbcType=VARCHAR}, #{stokarea,jdbcType=NUMERIC}, #{shopsinglemanger,jdbcType=VARCHAR}, 
+      #{shopmanger,jdbcType=VARCHAR}, #{shopopenstatus,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="cn.nome.saas.allocation.repository.old.vertica.entity.DwsShopDO" >
+    insert into dws_shop
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="province != null" >
+        Province,
+      </if>
+      <if test="city != null" >
+        City,
+      </if>
+      <if test="town != null" >
+        Town,
+      </if>
+      <if test="shopname != null" >
+        ShopName,
+      </if>
+      <if test="shopopendate != null" >
+        ShopOpenDate,
+      </if>
+      <if test="shoparea != null" >
+        ShopArea,
+      </if>
+      <if test="shopcode != null" >
+        ShopCode,
+      </if>
+      <if test="stokarea != null" >
+        StokArea,
+      </if>
+      <if test="shopsinglemanger != null" >
+        ShopSingleManger,
+      </if>
+      <if test="shopmanger != null" >
+        ShopManger,
+      </if>
+      <if test="shopopenstatus != null" >
+        ShopOpenStatus,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="province != null" >
+        #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null" >
+        #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="town != null" >
+        #{town,jdbcType=VARCHAR},
+      </if>
+      <if test="shopname != null" >
+        #{shopname,jdbcType=VARCHAR},
+      </if>
+      <if test="shopopendate != null" >
+        #{shopopendate,jdbcType=DATE},
+      </if>
+      <if test="shoparea != null" >
+        #{shoparea,jdbcType=NUMERIC},
+      </if>
+      <if test="shopcode != null" >
+        #{shopcode,jdbcType=VARCHAR},
+      </if>
+      <if test="stokarea != null" >
+        #{stokarea,jdbcType=NUMERIC},
+      </if>
+      <if test="shopsinglemanger != null" >
+        #{shopsinglemanger,jdbcType=VARCHAR},
+      </if>
+      <if test="shopmanger != null" >
+        #{shopmanger,jdbcType=VARCHAR},
+      </if>
+      <if test="shopopenstatus != null" >
+        #{shopopenstatus,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  
+  <select id="getList" resultMap="BaseResultMap" >
+    select * from dws.dws_shop limit 100
+  </select>
+
+  <select id="selectShopIdByCode" resultType="java.util.HashMap">
+    select ShopCode,ShopID from dws.dws_dim_shop where ShopCode in
+    <foreach collection="shopCodes" item="shopCode" index="index" open="(" close=")" separator=",">
+      #{shopCode}
+    </foreach>
+  </select>
+
+  <select id="selectShopListById" resultMap="DimShopResultMap">
+    select ShopCode,ShopID,ShopName,RegioneNO,RegioneBusName,SubRegioneBusName,ProvinceID,
+    ProvinceCode,ProvinceName,CityID,CityCode,CityName
+    from dws.dws_dim_shop where ShopID in
+    <foreach collection="shopIdList" item="shopId" index="index" open="(" close=")" separator=",">
+      #{shopId}
+    </foreach>
+  </select>
+
+  <select id="selectShopIdByParam" resultType="java.lang.String">
+    select ShopID from dws.dws_dim_shop where 1 = 1
+    <if test="regioneNo != null" >
+      and RegioneNO in (
+      <foreach collection="regioneNo" item="item" index="index" separator=",">
+        #{item}
+      </foreach>
+      )
+    </if>
+    <if test="provinceCode != null" >
+      and TRIM(ProvinceCode) = #{provinceCode}
+    </if>
+    <if test="cityCode != null" >
+      and TRIM(CityCode) = #{cityCode}
+    </if>
+  </select>
+
+  <select id="selectShopListByRegioneProvinceCity" resultMap="DimShopResultMap">
+    <if test="regioneNames != null" >
+      select ShopCode,ShopID from dws.dws_dim_shop
+      where
+        RegioneName in
+        <foreach collection="regioneNames" item="regione" index="index" open="(" close=")" separator=",">
+          #{regione}
+        </foreach>
+    </if>
+
+    <if test="provinceNames != null" >
+        <if test="regioneNames != null" >
+          union
+        </if>
+      select ShopCode,ShopID from dws.dws_dim_shop
+      where
+      ProvinceName in
+      <foreach collection="provinceNames" item="provinceName" index="index" open="(" close=")" separator=",">
+        #{provinceName}
+      </foreach>
+    </if>
+
+    <if test="cityNames != null" >
+      <if test="regioneNames != null or provinceNames != null ">
+        union
+      </if>
+      select ShopCode,ShopID from dws.dws_dim_shop
+      where
+      CityName in
+      <foreach collection="cityNames" item="cityName" index="index" open="(" close=")" separator=",">
+        #{cityName}
+      </foreach>
+    </if>
+  </select>
+
+</mapper>

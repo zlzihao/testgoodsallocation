@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.OutOfStockGoodsDOMapper" >
+
+    <resultMap id="outOfStockGoodsResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO" >
+        <result column="shop_id" property="shopId"  />
+        <result column="shop_name" property="shopName"  />
+        <result column="shop_level" property="shopLevel"  />
+        <result column="city_name" property="cityName"  />
+        <result column="min_display_qty" property="minDisplayQty"  />
+        <result column="mat_code" property="matCode"  />
+        <result column="mat_name" property="matName"  />
+        <result column="category_code" property="categoryCode"  />
+        <result column="size_id" property="sizeId"  />
+        <result column="size_code" property="sizeCode"  />
+        <result column="size_name" property="sizeName"  />
+        <result column="bar_code" property="batCode"  />
+        <result column="quote_price" property="quotePrice"  />
+        <result column="sum_sale_qty" property="sumSaleQty"  />
+        <result column="avg_sale_qty" property="avgSaleQty"  />
+        <result column="apply_stock_qty" property="applyStockQty"  />
+        <result column="stock_qty" property="stockQty"  />
+        <result column="path_stock_qty" property="pathStockQty"  />
+        <result column="safe_stock_qty" property="safeStockQty"  />
+        <result column="ideal_stock_qty" property="idealStockQty"  />
+        <result column="demand_stock_qty" property="demandStockQty"  />
+        <result column="supply_stock_qty" property="supplyStockQty"  />
+        <result column="forbidden_flag" property="forbiddenFlag"  />
+    </resultMap>
+
+    <resultMap id="demandStockDetailResultMap" type="cn.nome.saas.allocation.model.allocation.DemandStockDetail" >
+        <result column="mat_name" property="matName"  />
+        <result column="mat_code" property="matCode"  />
+        <result column="size_id" property="sizeID"  />
+        <result column="size_name" property="sizeName"  />
+        <result column="CategoryName" property="categoryName"  />
+        <result column="MidCategoryName" property="midCategoryName"  />
+        <result column="SmallCategoryName" property="smallCategoryName"  />
+        <result column="demand_stock_qty" property="needStockQtyInt"  />
+        <result column="amt" property="amt"  />
+        <result column="avg_sale_qty" property="avgSaleQty"  />
+        <result column="avg_sale_amount" property="avgSaleAmt"  />
+        <result column="stock_qty" property="stockQty"  />
+    </resultMap>
+
+    <resultMap id="supplyStockResultMap" type="cn.nome.saas.allocation.model.allocation.SupplyStock" >
+        <result column="shop_id" property="shopID"  />
+        <result column="shop_name" property="shopName"  />
+        <result column="avg_sale_qty" property="avgSaleQty"  />
+        <result column="avg_sale_amount" property="avgSaleAmt"  />
+        <result column="sku" property="sku"  />
+        <result column="contribute_amt" property="contributeAmt"  />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        shop_id,shop_name,shop_level,city_name,min_display_qty,mat_code,mat_name,category_code,size_id,size_code,
+        size_name,bar_code,quote_price,sum_sale_qty,avg_sale_qty,apply_stock_qty,stock_qty,path_stock_qty,safe_stock_qty,ideal_stock_qty,demand_stock_qty,supply_stock_qty,forbidden_flag
+    </sql>
+
+    <select id="getAllMatCodeList" parameterType="java.util.Map" resultType="java.lang.String">
+        select distinct stock.mat_code from ${tableName} stock,goods_info goods
+        where stock.mat_code = goods.MatCode
+        <if test="clothing != null ">
+            and stock.category_code in ('W','M')
+        </if>
+        <if test="market != null ">
+            and stock.category_code not in ('W','M')
+        </if>
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="bigCategoryList != null ">
+            <foreach collection="bigCategoryList" open="and goods.CategoryName in ("  close=")" separator="," item="category">
+                #{category}
+            </foreach>
+        </if>
+        <if test="middleCategoryList != null ">
+            <foreach collection="middleCategoryList" open="and goods.MidCategoryName in ("  close=")" separator="," item="category">
+                #{category}
+            </foreach>
+        </if>
+        <if test="smallCategoryList != null ">
+            <foreach collection="smallCategoryList" open="and goods.SmallCategoryName in ("  close=")" separator="," item="category">
+                #{category}
+            </foreach>
+        </if>
+
+    </select>
+
+    <select id="selectStockGoodsByShop" resultMap="outOfStockGoodsResultMap">
+        select shop_id,mat_code,size_id from ${tableName} where 1=1
+        <foreach collection="shopIdList" open="and shop_id in ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+    </select>
+
+
+    <select id="selectSkuList" parameterType="java.util.Map" resultType="java.util.Map">
+        select distinct mat_code,size_id from ${tableName}
+        where 1= 1
+        <foreach collection="matCodeList" open="and mat_code in ("  close=")" separator="," item="matCode">
+            #{matCode}
+        </foreach>
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="clothing != null ">
+            and category_code in ('W','M')
+        </if>
+        <if test="market != null ">
+            and category_code not in ('W','M')
+        </if>
+        order by mat_code
+    </select>
+
+    <select id="selectStockGoodsBySku" parameterType="java.util.Map" resultMap="outOfStockGoodsResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from ${tableName}
+        where 1 = 1
+        <foreach collection="matCodeList" open="and mat_code in ("  close=")" separator="," item="matCode">
+            #{matCode}
+        </foreach>
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="clothing != null ">
+            and category_code in ('W','M')
+        </if>
+        <if test="market != null ">
+            and category_code not in ('W','M')
+        </if>
+        order by shop_level asc,avg_sale_qty desc
+    </select>
+
+    <select id="selectDemandList" resultMap="outOfStockGoodsResultMap" >
+        select
+        <include refid="Base_Column_List" />
+        from ${tableName}
+        where 1 = 1
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="clothing != null ">
+            and category_code in ('W','M')
+        </if>
+        <if test="market != null ">
+            and category_code not in ('W','M')
+        </if>
+
+        and demand_stock_qty > 0
+        and ideal_stock_qty > 0
+        and forbidden_flag = 0
+        order by shop_level asc,demand_stock_qty desc
+        limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <select id="selectSupplyList" resultMap="outOfStockGoodsResultMap" >
+        select
+        <include refid="Base_Column_List" />
+        from ${tableName}
+        where 1 = 1
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and mat_code in ("  close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        and supply_stock_qty > 0
+        and forbidden_flag = 0
+        order by mat_code asc,supply_stock_qty desc,shop_level desc
+    </select>
+
+    <select id="getDemandStockStatsCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        select count(1) from (
+        select shop_id as shopID,shop_name as shopName,count(mat_code) as sku,sum(demand_stock_qty) as NeedStockQtyInt,sum(demand_stock_qty * quote_price) as TotalAmt
+        from ${tableName}
+        where 1 = 1
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in (" close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        and demand_stock_qty > 0
+        and forbidden_flag = 0
+        group by shop_id,shop_name
+        order by TotalAmt desc
+        <if test="page != null">
+            limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+        ) a
+    </select>
+
+    <select id="getDemandStockStats" resultType="cn.nome.saas.allocation.model.allocation.DemandStock" parameterType="java.util.Map">
+
+        select shop_id as shopID,shop_name as shopName,count(mat_code) as sku,sum(demand_stock_qty) as NeedStockQtyInt,sum(demand_stock_qty * quote_price) as TotalAmt
+        from ${tableName}
+        where 1 = 1
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in (" close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        and demand_stock_qty > 0
+        and forbidden_flag = 0
+        group by shop_id,shop_name
+        order by TotalAmt desc
+        <if test="page != null">
+            limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+
+    </select>
+
+    <select id="getDemandStockDetailCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        select count(1) from (
+        select
+        stock.mat_name,stock.mat_code,stock.size_id,stock.size_name,goods.CategoryName,goods.MidCategoryName,goods.SmallCategoryName,
+        stock.demand_stock_qty,stock.demand_stock_qty * stock.quote_price as amt,stock.avg_sale_qty,stock.avg_sale_qty *
+        stock.quote_price as avg_sale_amount,
+        stock.stock_qty
+        from ${tableName} stock
+        left join goods_info goods
+        on stock.mat_code = goods.MatCode
+        where 1=1
+        and stock.shop_id = #{shopId}
+        <if test="shopIdList != null">
+            <foreach collection="shopIdList" open="and shop_id in (" close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        and stock.demand_stock_qty > 0
+        and stock.forbidden_flag = 0
+        order by amt desc
+        <if test="page != null">
+            limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+        ) a
+    </select>
+
+    <select id="getDemandStockDetailList" resultMap="demandStockDetailResultMap" parameterType="java.util.Map">
+        select stock.mat_name,stock.mat_code,stock.size_id,stock.size_name,goods.CategoryName,goods.MidCategoryName,goods.SmallCategoryName,
+        stock.demand_stock_qty,stock.demand_stock_qty * stock.quote_price as amt,stock.avg_sale_qty,stock.avg_sale_qty * stock.quote_price as avg_sale_amount,
+        stock.stock_qty as stock_qty
+        from ${tableName} stock
+        left join goods_info goods
+        on stock.mat_code = goods.MatCode
+        where 1=1
+        and stock.shop_id = #{shopId}
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        and stock.demand_stock_qty > 0
+        and stock.forbidden_flag = 0
+        order by amt desc
+        <if test="page != null">
+          limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+    <select id="getSupplyShopCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        select count(s.shop_id) from (
+        select supply.shop_id,sum(supply.supply_stock_qty *supply.quote_price) as amt from ${tableName} supply,
+        (
+            select mat_code,size_id
+            from ${tableName}
+            where 1 = 1 and shop_id = #{shopId}
+            <if test="matCodeList != null">
+                <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                    #{matCode}
+                </foreach>
+            </if>
+            and demand_stock_qty > 0
+            and forbidden_flag = 0
+        ) demand
+        where supply.mat_code = demand.mat_code
+        and supply.size_id = demand.size_id
+        and supply.supply_stock_qty > 0
+        and supply.shop_id != #{shopId}
+        <if test="supplyShopIdList != null">
+            <foreach collection="supplyShopIdList" open="and supply.shop_id in (" close=")" separator="," item="supplyShopId">
+                #{supplyShopId}
+            </foreach>
+        </if>
+        group by supply.shop_id
+        having amt >=  #{priceLatch}
+        ) s
+    </select>
+
+    <select id="getSupplyStockStatsCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        select count(a.shop_id) from (
+            select supply.shop_id,sum(supply.supply_stock_qty *supply.quote_price) as contribute_amt
+            from ${tableName} supply,
+            (
+            select mat_code,size_id
+            from ${tableName}
+            where 1 = 1
+            and shop_id = #{inshopId}
+            <if test="matCodeList != null">
+                <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                    #{matCode}
+                </foreach>
+            </if>
+            and demand_stock_qty > 0
+            and forbidden_flag = 0
+            ) demand
+             where supply.mat_code = demand.mat_code
+            and supply.size_id = demand.size_id
+            and supply_stock_qty > 0
+            <if test="supplyShopIds != null">
+                <foreach collection="supplyShopIds" open="and shop_id in (" close=")" separator="," item="shopId">
+                    #{shopId}
+                </foreach>
+            </if>
+
+            group by supply.shop_id
+            having contribute_amt >= #{priceLatch}
+        ) a
+
+    </select>
+
+    <select id="getSupplyStockStats" resultMap="supplyStockResultMap" parameterType="java.util.Map">
+        select  supply.shop_id, supply.shop_name, sum(supply.avg_sale_qty) / count( supply.mat_code)  as avg_sale_qty,
+        sum( supply.avg_sale_qty *  supply.quote_price) as avg_sale_amount,sum( supply.supply_stock_qty * supply.quote_price) as contribute_amt,count( supply.mat_code) as sku
+        from ${tableName} supply,
+        (
+            select mat_code,size_id
+            from ${tableName}
+            where 1 = 1
+            and shop_id = #{inshopId}
+            <if test="matCodeList != null">
+                <foreach collection="matCodeList" open="and mat_code in (" close=")" separator="," item="matCode">
+                    #{matCode}
+                </foreach>
+            </if>
+            and demand_stock_qty > 0
+            and forbidden_flag = 0
+        ) demand
+        where supply.mat_code = demand.mat_code
+         and supply.size_id = demand.size_id
+         and supply_stock_qty > 0
+         <if test="supplyShopIds != null">
+            <foreach collection="supplyShopIds" open="and shop_id in (" close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+         </if>
+         group by  supply.shop_id, supply.shop_name
+         having contribute_amt >=  #{priceLatch}
+        <if test="page != null">
+            limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+    <update id="batchUpdateSaleQty">
+        <foreach collection="list" item="record" index="index" open="" close="" separator=";">
+            update ${tableName}
+            <set >
+                    avg_sale_qty =  #{record.avgSaleQty}
+            </set>
+            where shop_id = #{record.shopId} and mat_code = #{record.matCode} and size_id = #{record.sizeId}
+        </foreach>
+    </update>
+
+    <select id="checkTableExists" parameterType="java.lang.String" resultType="java.lang.Integer" >
+        select count(*) from information_schema.TABLES where table_name = #{tableName}
+    </select>
+
+    <update id="createNewTable" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+            `shop_id` varchar(32) NOT NULL DEFAULT '' COMMENT '门店ID',
+              `shop_name` varchar(64) NOT NULL DEFAULT '' COMMENT '门店名称',
+              `shop_level` char(16) NOT NULL COMMENT '门店等级',
+              `city_name` varchar(32) NOT NULL DEFAULT '' COMMENT '城市',
+              `min_display_qty` int(11) NOT NULL COMMENT '最小陈列库存',
+              `mat_id` varchar(64) NOT NULL DEFAULT '',
+              `mat_code` varchar(64) NOT NULL DEFAULT '',
+              `mat_name` varchar(64) DEFAULT '',
+              `category_code` char(32) NOT NULL DEFAULT '' COMMENT '商品分类',
+              `size_id` varchar(64) NOT NULL DEFAULT '',
+              `size_code` varchar(64) DEFAULT '',
+              `size_name` varchar(64) NOT NULL DEFAULT '',
+              `bar_code` varchar(32)  DEFAULT '',
+              `quote_price` decimal(19,4) NOT NULL COMMENT '商品单价',
+              `sum_sale_qty` int(11) NOT NULL COMMENT '28日销量总量',
+              `avg_sale_qty` decimal(19,4) NOT NULL COMMENT '日均销量',
+              `apply_stock_qty` int(11) NOT NULL COMMENT '在配库存',
+              `stock_qty` int(11) NOT NULL COMMENT '店仓库存',
+              `path_stock_qty` int(11) NOT NULL COMMENT '在途库存',
+              `safe_stock_qty` int(11) NOT NULL COMMENT '安全库存',
+              `demand_stock_qty` int(11) NOT NULL COMMENT '需求库存',
+              `supply_stock_qty` int(11) NOT NULL COMMENT '供给库存',
+              `ideal_stock_qty` int(11) DEFAULT '0' COMMENT '安全库存',
+              `forbidden_flag` int(1) DEFAULT '0' COMMENT '禁配标示',
+              `invalid_skc_flag` int(1) DEFAULT '0' COMMENT '非有效skc标示 0-有效 1-无效'
+        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    </update>
+
+    <update id="addIndex" parameterType="java.lang.String">
+        ALTER TABLE ${tableName} ADD INDEX `shop_id_index`( `shop_id`);
+        ALTER TABLE ${tableName} ADD INDEX `mat_code_index`(  `mat_code`);
+    </update>
+
+    <delete id="clearAll" parameterType="java.lang.String">
+        delete from  ${tableName}
+    </delete>
+
+    <insert id="insertSelective"  parameterType="java.util.Map" >
+        insert into ${tableName} (
+            shop_id,shop_name,shop_level,city_name,min_display_qty,mat_code,mat_name,category_code,size_id,
+            size_code,size_name,bar_code,quote_price,sum_sale_qty,avg_sale_qty,apply_stock_qty,stock_qty,path_stock_qty,
+            safe_stock_qty,ideal_stock_qty,demand_stock_qty,supply_stock_qty,forbidden_flag
+        )
+        values
+        <foreach collection="list" item="record" index="index" open="" close="" separator=",">
+            (#{record.shopId},#{record.shopName},#{record.shopLevel},#{record.cityName},#{record.minDisplayQty},#{record.matCode},
+            #{record.matName},#{record.categoryCode},#{record.sizeId},#{record.sizeCode},#{record.sizeName},#{record.batCode},#{record.quotePrice},#{record.sumSaleQty},
+            #{record.avgSaleQty},#{record.applyStockQty},#{record.stockQty},#{record.pathStockQty},#{record.safeStockQty},#{record.idealStockQty},
+            #{record.demandStockQty},#{record.supplyStockQty},#{record.forbiddenFlag})
+        </foreach>
+
+    </insert>
+
+    <update id="updateSelective"  parameterType="java.util.Map">
+        <foreach collection="list" item="record" index="index" open="" close="" separator=";">
+            update ${tableName}
+            <set >
+                <if test="record.idealStockQty != null" >
+                    ideal_stock_qty = #{record.idealStockQty},
+                </if>
+                <if test="record.demandStockQty != null" >
+                    demand_stock_qty = #{record.demandStockQty},
+                </if>
+                <if test="record.supplyStockQty != null" >
+                    supply_stock_qty = #{record.supplyStockQty},
+                </if>
+                <if test="record.invalidSkcFlag != null" >
+                    invalid_skc_flag = #{record.invalidSkcFlag}
+                </if>
+            </set>
+            where shop_id = #{record.shopId} and mat_code = #{record.matCode} and size_id = #{record.sizeId}
+        </foreach>
+    </update>
+
+
+</mapper>

@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.ShopInfoDOMapper" >
+
+    <sql id="Base_Column_List">
+        ID,ShopID,ShopCode,UserId,GoodsArea,UserName,IssueTime,ShopLevel,MaxDays,HaveChild,WomenLevel,MenLevel,CommodityLevel,IssueDay, RoadDay,SafeDay, Status, AttrKeys, AttrFirVal, AttrSecVal, AttrThiVal, AttrFourVal, AttrFifVal,
+        CommoditySpace,ClothSpace,SheetHeadSpaceNum,CosmeticsTable,StationeryTable,DisplayLevel
+    </sql>
+
+
+    <select id="shopInfoData" resultType="cn.nome.saas.allocation.model.issue.ShopInfoData">
+        SELECT
+          <include refid="Base_Column_List" />
+        FROM
+          shop_info
+    </select>
+
+    <select id="getShopListOfUser" resultType="cn.nome.saas.allocation.model.issue.ShopInfoData">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM
+        shop_info
+        where UserName = #{userName}
+    </select>
+
+
+    <insert id="batchInsertTab" parameterType="java.util.ArrayList">
+        REPLACE into
+        shop_info(ShopID, ShopCode,UserName,GoodsArea, UserId, IssueTime,
+        ShopLevel,MaxDays,HaveChild,DisplayLevel,CommodityLevel,WomenLevel,MenLevel,RoadDay, IssueDay,SafeDay, Status, Operator, AttrKeys, AttrFirVal, AttrSecVal, AttrThiVal, AttrFourVal, AttrFifVal,
+        CommoditySpace,ClothSpace,SheetHeadSpaceNum,CosmeticsTable,StationeryTable
+        )
+        values
+        <foreach collection="importData" item="item" index="index"
+                 separator=",">
+            (
+                #{item.ShopID},
+                #{item.ShopCode},
+                #{item.UserName},
+                #{item.GoodsArea},
+                #{item.UserId},
+                #{item.IssueTime},
+                #{item.ShopLevel},
+                #{item.MaxDays},
+                #{item.HaveChild},
+                #{item.DisplayLevel},
+                #{item.CommodityLevel},
+                #{item.WomenLevel},
+                #{item.MenLevel},
+                #{item.RoadDay},
+                #{item.IssueDay},
+                #{item.SafeDay},
+                #{item.Status},
+                #{item.Operator},
+                #{item.AttrKeys},
+                #{item.AttrFirVal},
+                #{item.AttrSecVal},
+                #{item.AttrThiVal},
+                #{item.AttrFourVal},
+                #{item.AttrFifVal},
+                #{item.CommoditySpace},
+                #{item.ClothSpace},
+                #{item.SheetHeadSpaceNum},
+                #{item.CosmeticsTable},
+                #{item.StationeryTable}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="cn.nome.saas.allocation.model.issue.ShopInfoData">
+        update shop_info
+        <set>
+            <if test="GoodsArea != null" >
+                GoodsArea = #{GoodsArea},
+            </if>
+            <if test="UserName != null" >
+                UserName = #{UserName},
+            </if>
+            <if test="UserId != null" >
+                UserId = #{UserId},
+            </if>
+            <if test="IssueTime != null" >
+                IssueTime = #{IssueTime},
+            </if>
+            <if test="ShopLevel != null" >
+                ShopLevel = #{ShopLevel},
+            </if>
+            <if test="MaxDays != null" >
+                MaxDays = #{MaxDays},
+            </if>
+            <if test="HaveChild != null" >
+                HaveChild = #{HaveChild},
+            </if>
+            <if test="WomenLevel != null" >
+                WomenLevel = #{WomenLevel},
+            </if>
+            <if test="MenLevel != null" >
+                MenLevel = #{MenLevel},
+            </if>
+            <if test="DisplayLevel != null" >
+                DisplayLevel =#{DisplayLevel},
+            </if>
+
+            <if test="CommodityLevel != null" >
+                CommodityLevel = #{CommodityLevel},
+            </if>
+            <if test="RoadDay != null" >
+                RoadDay = #{RoadDay},
+            </if>
+            <if test="IssueDay != null" >
+                IssueDay = #{IssueDay},
+            </if>
+            <if test="SafeDay != null" >
+                SafeDay = #{SafeDay},
+            </if>
+            <if test="Status != null" >
+                Status = #{Status},
+            </if>
+            <if test="CommoditySpace != null" >
+                CommoditySpace = #{CommoditySpace},
+            </if>
+            <if test="ClothSpace != null" >
+                ClothSpace = #{ClothSpace},
+            </if>
+            <if test="SheetHeadSpaceNum != null" >
+                SheetHeadSpaceNum = #{SheetHeadSpaceNum},
+            </if>
+            <if test="CosmeticsTable != null" >
+                CosmeticsTable = #{CosmeticsTable},
+            </if>
+            <if test="StationeryTable != null" >
+                StationeryTable = #{StationeryTable},
+            </if>
+            <if test="AttrKeys != null" >
+                AttrKeys = #{AttrKeys},
+            </if>
+            <if test="AttrFirVal != null" >
+                AttrFirVal = #{AttrFirVal},
+            </if>
+            <if test="AttrSecVal != null" >
+                AttrSecVal = #{AttrSecVal},
+            </if>
+            <if test="AttrThiVal != null" >
+                AttrThiVal = #{AttrThiVal},
+            </if>
+            <if test="AttrFourVal != null" >
+                AttrFourVal = #{AttrFourVal},
+            </if>
+            <if test="AttrFifVal != null" >
+                AttrFifVal = #{AttrFifVal},
+            </if>
+            <if test="Operator != null" >
+                Operator = #{Operator},
+            </if>
+            <if test="UserId != null" >
+                UserId = #{UserId}
+            </if>
+        </set>
+        where ID = #{ID}
+    </update>
+
+    <update id="updateByShopId" parameterType="cn.nome.saas.allocation.model.issue.ShopInfoData">
+        update shop_info
+        <set>
+            <if test="GoodsArea != null" >
+                GoodsArea = #{GoodsArea},
+            </if>
+            <if test="UserName != null" >
+                UserName = #{UserName},
+            </if>
+            <if test="IssueTime != null" >
+                IssueTime = #{IssueTime},
+            </if>
+            <if test="ShopLevel != null" >
+                ShopLevel = #{ShopLevel},
+            </if>
+            <if test="HaveChild != null" >
+                HaveChild = #{HaveChild},
+            </if>
+            <if test="WomenLevel != null" >
+                WomenLevel = #{WomenLevel},
+            </if>
+            <if test="MenLevel != null" >
+                MenLevel = #{MenLevel},
+            </if>
+            <if test="CommodityLevel != null" >
+                CommodityLevel = #{CommodityLevel},
+            </if>
+            <if test="RoadDay != null" >
+                RoadDay = #{RoadDay},
+            </if>
+            <if test="SafeDay != null" >
+                SafeDay = #{SafeDay},
+            </if>
+            <if test="Status != null" >
+                Status = #{Status},
+            </if>
+            <if test="CommoditySpace != null" >
+                CommoditySpace = #{CommoditySpace},
+            </if>
+            <if test="ClothSpace != null" >
+                ClothSpace = #{ClothSpace},
+            </if>
+            <if test="SheetHeadSpaceNum != null" >
+                SheetHeadSpaceNum = #{SheetHeadSpaceNum},
+            </if>
+            <if test="CosmeticsTable != null" >
+                CosmeticsTable = #{CosmeticsTable},
+            </if>
+            <if test="StationeryTable != null" >
+                StationeryTable = #{StationeryTable},
+            </if>
+            <if test="AttrKeys != null" >
+                AttrKeys = #{AttrKeys},
+            </if>
+            <if test="AttrFirVal != null" >
+                AttrFirVal = #{AttrFirVal},
+            </if>
+            <if test="AttrSecVal != null" >
+                AttrSecVal = #{AttrSecVal},
+            </if>
+            <if test="AttrThiVal != null" >
+                AttrThiVal = #{AttrThiVal},
+            </if>
+            <if test="AttrFourVal != null" >
+                AttrFourVal = #{AttrFourVal},
+            </if>
+            <if test="AttrFifVal != null" >
+                AttrFifVal = #{AttrFifVal},
+            </if>
+            <if test="Operator != null" >
+                Operator = #{Operator},
+            </if>
+            <if test="UserId != null" >
+                UserId = #{UserId}
+            </if>
+        </set>
+        where ShopID = #{ShopID}
+    </update>
+
+    <update id="updateAttrKeys">
+        update
+          shop_info
+        set
+          AttrKeys = #{attrKeys};
+    </update>
+
+    <select id="getGoodsAreaList" resultType="java.lang.String">
+        select DISTINCT (GoodsArea) from shop_info where GoodsArea is not null;
+    </select>
+    <select id="getShopLvList" resultType="java.lang.String">
+        select DISTINCT (ShopLevel) from shop_info where ShopLevel is not null;
+    </select>
+
+    <select id="selectByPage" resultType="cn.nome.saas.allocation.model.issue.ShopInfoData">
+        select
+          <include refid="Base_Column_List" />
+        from
+          shop_info
+        where
+          1=1
+        <if test="goodsAreas != null" >
+            and GoodsArea in
+            <foreach collection="goodsAreas" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopLvs != null" >
+            and ShopLevel in
+            <foreach collection="shopLvs" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopIds != null" >
+            and ShopID in
+            <foreach collection="shopIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopCode != null" >
+            and ShopCode like  concat('%', #{shopCode}, '%')
+        </if>
+        order by GoodsArea desc
+        <if test="offset != null and pageSize != null" >
+            limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(1) from
+        (select
+        <include refid="Base_Column_List" />
+        from
+        shop_info
+        where
+        1=1
+        <if test="goodsAreas != null" >
+            and GoodsArea in
+            <foreach collection="goodsAreas" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopLvs != null" >
+            and ShopLevel in
+            <foreach collection="shopLvs" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopIds != null" >
+            and ShopID in
+            <foreach collection="shopIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopCode != null" >
+            and ShopCode like  concat('%', #{shopCode}, '%')
+        </if>
+        ) a
+    </select>
+
+    <select id="selectById" resultType="cn.nome.saas.allocation.model.issue.ShopInfoData">
+        select
+        <include refid="Base_Column_List" />
+        from
+        shop_info
+        where id = #{id}
+    </select>
+
+    <insert id="insertShopTask">
+        insert into shop_info_task(shop_id,status,created_at)
+        values(#{shopId},0,now())
+    </insert>
+
+    <select id="getLastShopTask" resultType="cn.nome.saas.allocation.model.allocation.ShopInfoTask">
+        select id as id,shop_id as shopId,status,retry from shop_info_task where status = 0 or status = 3 order by status asc,created_at asc limit 0,5
+    </select>
+
+    <select id="checkShopTask" resultType="java.lang.Integer">
+        select count(1) as cnt from shop_info_task where status = 0 and shop_id = #{shopId}
+    </select>
+
+    <select id="checkShopTaskRunningTask" resultType="java.lang.Integer">
+        select count(1) as cnt from shop_info_task where status = 2
+    </select>
+
+    <select id="getShopTaskRunningTask" resultType="cn.nome.saas.allocation.model.allocation.ShopInfoTask">
+        select id as id from shop_info_task where status = 2 and DATE_ADD(NOW(), INTERVAL -30 MINUTE)>=updated_at
+        order by updated_at asc
+    </select>
+
+    <update id="updateShopInfoTaskToReady">
+        update shop_info_task set status = 0,updated_at = now() where id = #{id}
+    </update>
+
+    <update id="updateShopInfoTaskToRun">
+        update shop_info_task set status = 2,updated_at = now() where id = #{id}
+    </update>
+
+    <update id="updateShopInfoTaskToReRun">
+        update shop_info_task set status = 2,updated_at = now(),retry = retry+1 where id = #{id}
+    </update>
+
+    <update id="updateShopInfoTaskFinish">
+        update shop_info_task set status = 1,updated_at = now() where id = #{id}
+    </update>
+
+    <update id="updateShopInfoTaskRetry">
+        update shop_info_task set status = 3,updated_at = now() where id = #{id}
+    </update>
+
+</mapper>

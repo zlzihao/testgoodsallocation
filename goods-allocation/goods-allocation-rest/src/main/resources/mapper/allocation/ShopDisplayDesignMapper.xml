@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.ShopDisplayDesignDOMapper" >
+
+    <sql id="Base_Column_List" >
+        ShopId,ShopCode,CategoryName,MidCategoryName,DisplayPercent,Display_Qty
+    </sql>
+
+    <select id="shopDisplayData" resultType="cn.nome.saas.allocation.model.issue.ShopDisplayDesignData">
+        SELECT ShopId,ShopCode,CategoryName,MidCategoryName,DisplayPercent,Display_Qty FROM shop_display_design
+    </select>
+
+    <insert id="batchInsertTab" parameterType="java.util.ArrayList">
+        insert into
+        shop_display_design(ShopId, ShopCode,CategoryName,MidCategoryName, DisplayPercent, Display_Qty,Operator)
+        values
+        <foreach collection="importData" item="item" index="index"
+                 separator=",">
+            (
+            #{item.ShopId},
+            #{item.ShopCode},
+            #{item.CategoryName},
+            #{item.MidCategoryName},
+            #{item.DisplayPercent},
+            #{item.Display_Qty},
+            #{item.Operator}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getLargeCategoryList" resultType="java.lang.String">
+        SELECT DISTINCT (CategoryName) from shop_display_design where CategoryName is not null;
+    </select>
+    <select id="getMidCategoryList" resultType="java.lang.String">
+        SELECT DISTINCT (MidCategoryName) from shop_display_design where MidCategoryName is not null
+        <if test="largeCategory != null" >
+            <foreach collection="largeCategory" item="item" index="index" open="and CategoryName in (" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectByPage" resultType="cn.nome.saas.allocation.model.issue.ShopDisplayDesignData">
+        select
+          <include refid="Base_Column_List" />
+        from
+          shop_display_design
+        where
+          1=1
+        <if test="largeCategory != null" >
+            and CategoryName in
+            <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="midCategory != null" >
+            and MidCategoryName in
+            <foreach collection="midCategory" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopIds != null" >
+            and ShopID in
+            <foreach collection="shopIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        order by ShopID desc
+        <if test="offset != null and pageSize != null" >
+            limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(1) from
+        (select
+        <include refid="Base_Column_List" />
+        from
+        shop_display_design
+        where
+        1=1
+        <if test="largeCategory != null" >
+            and CategoryName in
+            <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="midCategory != null" >
+            and MidCategoryName in
+            <foreach collection="midCategory" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="shopIds != null" >
+            and ShopID in
+            <foreach collection="shopIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        ) a
+    </select>
+    
+    <select id="getShopDisplayDesignListByUserId" resultType="cn.nome.saas.allocation.model.issue.ShopDisplayDesignData">
+        select sdd.*, si.StationeryTable from shop_display_design sdd , shop_info si where si.ShopId = sdd.ShopID and si.UserId = #{userId};
+
+    </select>
+
+    <delete id="delByShopIds" parameterType="java.util.Set" >
+        delete from shop_display_design where ShopId in
+        <foreach collection="shopIds" item="item" index="index" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

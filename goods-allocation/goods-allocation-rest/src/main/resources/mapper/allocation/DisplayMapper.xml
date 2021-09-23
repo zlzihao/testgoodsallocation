@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.DisplayDOMapper" >
+
+    <resultMap id="Display" type="cn.nome.saas.allocation.repository.entity.allocation.DisplayDo" >
+        <result column="CategoryCode" property="categoryCode"  />
+        <result column="CategoryName" property="categoryName"  />
+        <result column="MidCategoryCode" property="midCategoryCode"  />
+        <result column="MidCategoryName" property="midCategoryName"  />
+        <result column="SmallCategoryCode" property="smallCategoryCode"  />
+        <result column="SmallCategoryName" property="smallCategoryName"  />
+        <result column="MidDisplayDepth" property="midDisplayDepth"  />
+        <result column="DisplayDepth" property="displayDepth"  />
+        <result column="Columns" property="columns"  />
+        <result column="Rows" property="rows"  />
+        <result column="Depth" property="depth"  />
+        <result column="QtyWeight" property="qtyWeight"  />
+        <result column="Operator" property="operator"  />
+        <result column="CreatedAt" property="createdAt"  />
+        <result column="UpdatedAt" property="updatedAt"  />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        CategoryName,MidCategoryName,SmallCategoryName,MidDisplayDepth,DisplayDepth,Columns,Rows,Depth,QtyWeight
+    </sql>
+
+    <select id="displayData" resultMap="Display">
+        SELECT CategoryName,MidCategoryName,SmallCategoryName,MidDisplayDepth,DisplayDepth,Columns,Rows,Depth,QtyWeight FROM display
+    </select>
+    
+    <select id="getLargeCategoryList" resultType="java.lang.String">
+        SELECT DISTINCT (CategoryName) from display where CategoryName is not null;
+    </select>
+    <select id="getMidCategoryList" resultType="java.lang.String">
+        SELECT DISTINCT (MidCategoryName) from display where MidCategoryName is not null
+        <if test="largeCategory != null" >
+            <foreach collection="largeCategory" item="item" index="index" open="and CategoryName in (" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="getSmallCategoryList" resultType="java.lang.String">
+        SELECT DISTINCT (SmallCategoryName) from display where SmallCategoryName is not null
+        <if test="midCategory != null" >
+            <foreach collection="midCategory" item="item" index="index" open="and MidCategoryName in (" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <insert id="batchInsertTab" parameterType="java.util.ArrayList">
+        REPLACE into
+        display(CategoryName, MidCategoryName,SmallCategoryName,MidDisplayDepth, DisplayDepth,
+        Columns,Rows,Depth,QtyWeight,Operator)
+        values
+        <foreach collection="importData" item="item" index="index"
+                 separator=",">
+            (
+            #{item.CategoryName},
+            #{item.MidCategoryName},
+            #{item.SmallCategoryName},
+            #{item.MidDisplayDepth},
+            #{item.DisplayDepth},
+            #{item.Columns},
+            #{item.Rows},
+            #{item.Depth},
+            #{item.QtyWeight},
+            #{item.Operator}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(*) from
+        (
+            select
+              <include refid="Base_Column_List" />
+            from
+              display
+            where
+                1=1
+                <if test="largeCategory != null" >
+                    and CategoryName in
+                    <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="midCategory != null" >
+                    and MidCategoryName in
+                    <foreach collection="midCategory" item="item" index="index" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="smallCategory != null" >
+                    and SmallCategoryName in
+                    <foreach collection="smallCategory" item="item" index="index" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+        ) a
+    </select>
+
+    <select id="selectByPage" resultMap="Display">
+        <!--<if test="largeCategory != null" >
+            select
+              <include refid="Base_Column_List" />
+            from
+              display
+            where CategoryName in
+                <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+        </if>
+        <if test="midCategory != null" >
+            <if test="largeCategory != null" >
+                union
+            </if>
+            select
+              <include refid="Base_Column_List" />
+            from
+              display
+            where MidCategoryName in
+                <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+        </if>
+        <if test="smallCategory != null" >
+            <if test="largeCategory != null or midCategory != null" >
+                union
+            </if>
+            select
+              <include refid="Base_Column_List" />
+            from
+              display
+            where SmallCategoryName in
+                <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+        </if>
+        order by CategoryName desc-->
+            select
+              <include refid="Base_Column_List" />
+            from
+              display
+            where
+                1=1
+            <if test="largeCategory != null" >
+                and CategoryName in
+                <foreach collection="largeCategory" item="item" index="index" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="midCategory != null" >
+                and MidCategoryName in
+                <foreach collection="midCategory" item="item" index="index" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="smallCategory != null" >
+                and SmallCategoryName in
+                <foreach collection="smallCategory" item="item" index="index" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            order by CategoryName desc
+        <if test="offset != null and pageSize != null" >
+            limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+</mapper>

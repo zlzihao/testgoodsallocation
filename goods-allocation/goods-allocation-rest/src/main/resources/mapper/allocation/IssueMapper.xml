@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.IssueDOMapper" >
+
+    <insert id="addIssueInStock" parameterType="java.util.List">
+        insert into ${tableName}(TaskId,ShopID,QuotePrice,MatCode,SizeID,SizeName,AvgSaleAmt,AvgSaleQty,StockQty,PathStockQty,MoveQty,TotalStockQty,WarehouseStockQty,NeedStockQtyInt,IsNew,IsProhibited) values
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (#{item.taskId},#{item.shopID},#{item.quotePrice},#{item.matCode},#{item.sizeID},#{item.sizeName},#{item.avgSaleAmt},#{item.avgSaleQty},#{item.stockQty},#{item.pathStockQty},#{item.moveQty},#{item.totalStockQty},#{item.warehouseStockQty},#{item.needStockQtyInt},#{item.isNew},#{item.isProhibited})
+        </foreach>
+    </insert>
+
+    <insert id="addIssueOutStock" parameterType="java.util.List">
+        insert into issue_out_stock(TaskId,StockID,QuotePrice,MatCode,SizeID,AvgSaleAmt,AvgSaleQty,StockQty) values
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (#{item.taskId},#{item.stockID},#{item.quotePrice},#{item.matCode},#{item.sizeID},#{item.avgSaleAmt},#{item.avgSaleQty},#{item.stockQty})
+        </foreach>
+    </insert>
+
+    <select id="getMidCategorySale" resultType="cn.nome.saas.allocation.repository.entity.allocation.MidCategoryStockDO">
+        <![CDATA[
+			select * from(
+				select a.ShopID as shopID,b.CategoryName as categoryName,b.MidCategoryName as midCategoryName,avg(a.AvgSaleQty) as avgSaleQty from ${tableName} a inner join goods_info b
+				on a.matcode = b.matcode
+				where a.IsNew='0' and a.taskId=${taskId}
+				group by a.ShopID,b.CategoryName,b.MidCategoryName
+			)a where a.MidCategoryName is not null
+	  ]]>
+    </select>
+
+    <select id="getShopAvg" resultType="java.util.Map">
+        <![CDATA[
+			select ShopId,round(avg(AvgSaleQty),2) as AvgSaleQty from ${tableName} where TaskId=${taskId} group by ShopID
+	  ]]>
+    </select>
+
+    <select id="getStockSku" resultType="cn.nome.saas.allocation.model.issue.IssueOutStock">
+        <![CDATA[
+					SELECT a.matcode as matCode,a.sizeid as sizeID,(a.StockQty-b.needTotalStockQty) as remainQty from issue_out_stock a
+					left join(
+						select matcode,sizeid,sum(NeedStockQty-TotalStockQty) as needTotalStockQty from issue_need_stock where TaskId=${taskId} and NeedStockQty-TotalStockQty>0
+						group by matcode,sizeid
+					) b on a.matcode=b.matcode and a.sizeid=b.sizeid
+					where a.TaskId=${taskId}
+	  ]]>
+    </select>
+
+    <select id="getIssueUndoData" resultType="cn.nome.saas.allocation.model.issue.IssueUndoData">
+        <![CDATA[
+
+			SELECT ud.TaskId as taskId,ud.ShopID AS inShopID,ud.MatCode as matCode,ud.SizeID as sizeID,ud.SizeName as sizeName,
+			ud.QuotePrice as quotePrice,ud.IsNew as isNew,ud.IsProhibited as isProhibited,
+			ud.AvgSaleQty as avgSaleQty,ud.StockQty as stockQty,ud.TotalStockQty as totalStockQty,
+			gi.MinPackageQty as minPackageQty,
+			gi.CategoryName as categoryName,gi.MidCategoryName as midCategoryName,gi.SmallCategoryName as smallCategoryName,gi.MatName as matName
+			FROM(
+				SELECT TaskId,ShopID,MatCode,SizeID,SizeName,QuotePrice,IsNew,IsProhibited,AvgSaleQty,StockQty,TotalStockQty FROM ${tableName} iis
+				WHERE ShopID= '${shopId}' AND TaskId = #{taskId}
+				AND (
+					SELECT COUNT(1) AS num FROM issue_detail isd WHERE isd.InShopID = iis.ShopID AND isd.MatCode = iis.MatCode AND isd.SizeID = iis.SizeID
+				) = 0
+			) ud
+			LEFT JOIN issue_out_stock ios ON ud.MatCode = ios.MatCode AND ud.SizeID = ios.SizeID AND ud.TaskId = ios.TaskId
+			LEFT JOIN goods_info gi ON ud.MatCode = gi.MatCode
+			WHERE gi.CategoryName IS NOT NULL AND gi.MatName IS NOT NULL AND (ud.TotalStockQty > 0 OR ios.StockQty IS NOT NULL)
+
+		]]>
+    </select>
+
+    <select id="getMidMidCategoryQty" resultType="cn.nome.saas.allocation.repository.entity.allocation.MidCategoryStockDO">
+        select a.taskid as taskId,a.ShopID as shopID,a.CategoryName as categoryName,a.MidCategoryName as midCategoryName,a.AvgSaleQty as avgSaleQty,
+        case when b.DisplayQty is null then 0 else b.DisplayQty end as displayQty,
+        case when b.DisplayQty is null then 0 else (b.DisplayQty + b.RoadDay * AvgSaleQty) end as needQty
+        from(
+        select a.taskid,a.shopid,b.CategoryName,b.MidCategoryName,sum(a.AvgSaleQty) as AvgSaleQty
+        FROM (
+        SELECT Matcode,taskid,shopid,AvgSaleQty FROM ${tableName} WHERE 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            AND ShopID IN
+            <foreach collection="shopIds" item="shopId" index="index"
+                     open="(" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+        ) a
+        left join ${tabName} b on a.Matcode = b.Matcode
+        where a.taskid=${taskId}
+        group by a.taskid,a.ShopID,b.CategoryName,b.MidCategoryName
+        ) a left join(
+        select a.*,b.DisplayDepth,a.Display_Qty*b.DisplayDepth*a.DisplayPercent as DisplayQty,c.RoadDay from shop_display_design_v a
+        LEFT JOIN display_v b on a.MidCategoryName = b.MidCategoryName and a.CategoryName = b.CategoryName
+        LEFT JOIN shop_info c on a.ShopID=c.ShopId
+        ) b on a.ShopID=b.ShopId and a.MidCategoryName=b.MidCategoryName and a.CategoryName=b.CategoryName
+    </select>
+
+    <insert id="midMidCategoryQty">
+        insert into issue_mid_category_qty(taskid,shopid,CategoryName,MidCategoryName,AvgSaleQty,DisplayQty,NeedQty)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskId},#{item.shopID},#{item.categoryName},#{item.midCategoryName},#{item.avgSaleQty},#{item.displayQty},#{item.needQty})
+        </foreach>
+    </insert>
+
+    <select id = "getNeedSkuStock" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueNeedStockDO">
+        <![CDATA[
+        select a.*,(a.minQty+((a.needStockQty1+a.needStockQty2-abs(a.needStockQty1-a.needStockQty2))/2)+abs(a.minQty-((a.needStockQty1+a.needStockQty2-abs(a.needStockQty1-a.needStockQty2))/2)))/2 as needStockQty
+        from(
+        select a.taskid as taskId,a.shopid as shopId,a.matcode as matCode,a.sizeid as sizeId,a.SizeName as sizeName,b.TotalSaleQty as totalSaleQty,c.NeedQty as needQty,
+        round(a.AvgSaleQty/TotalSaleQty,4) as percentCategory,
+        c.NeedQty*round(a.AvgSaleQty/TotalSaleQty,4) as needStockQty1,
+        a.AvgSaleQty*70 as needStockQty2,CASE WHEN d.minQty is null THEN 0 ELSE d.minQty + shop.RoadDay*a.AvgSaleQty END minQty,
+        a.CategoryName as categoryName ,a.MidCategoryName as midCategoryName,a.TotalStockQty as totalStockQty
+        from (
+        select a.*,b.CategoryName,b.MidCategoryName from ${tableName} a
+        left JOIN ${tabName} b on a.MatCode=b.MatCode
+        where a.taskid=${taskId} and a.shopid='${shopId}' and a.IsProhibited = 0 and a.matcode in(select matcode from goods_area_level_detail where shopid='${shopId}')
+        )a
+        left JOIN(
+        SELECT b.CategoryName,b.MidCategoryName,SUM(AvgSaleQty) TotalSaleQty from ${tableName} a
+        left join ${tabName} b on a.MatCode=b.MatCode
+        where  a.taskid=${taskId} and a.shopid='${shopId}'
+        group by b.CategoryName,b.MidCategoryName
+        )b on a.MidCategoryName = b.MidCategoryName and a.CategoryName = b.CategoryName
+        left join issue_mid_category_qty c on c.TaskId = ${taskId} AND a.CategoryName = c.CategoryName  and a.MidCategoryName = c.MidCategoryName and a.shopid= c.shopid
+        left join shop_info shop on shop.shopid = a.shopid
+        left join(
+        select type_value as matcode,max(num) as minQty from security_single_rule where shop_id='${shopId}' and start_date<=DATE_FORMAT(NOW(),'%Y-%m-%d') and end_date >=DATE_FORMAT(NOW(),'%Y-%m-%d') group by type_value
+        ) d on a.matcode = d.matcode
+        WHERE totalSaleQty > 0
+        )a
+        ]]>
+    </select>
+
+    <insert id="addNeedSkuStock" parameterType="java.util.List">
+		insert into issue_need_stock(TaskId,ShopID,MatCode,SizeID,SizeName,TotalSaleQty,NeedQty,PercentCategory,NeedStockQty1,NeedStockQty2,minQty,CategoryName,MidCategoryName,TotalStockQty,NeedStockQty)
+		values
+		<foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskId},#{item.shopId},#{item.matCode},#{item.sizeId},#{item.sizeName},#{item.totalSaleQty},#{item.needQty},#{item.percentCategory},#{item.needStockQty1},#{item.needStockQty2},#{item.minQty},#{item.categoryName},#{item.midCategoryName},#{item.totalStockQty},#{item.needStockQty})
+		</foreach>
+
+    </insert>
+
+    <insert id="addEnoughStockSku">
+        insert into issue_detail(TaskId,InShopID,MatCode,SizeID,SizeName,Qty,PackageQty,CategoryName,MidCategoryName,QuotePrice,NeedQty,OrderPackage,MinPackageQty,SmallCategoryName,MatName)
+        select
+        a.TaskId,a.ShopID,a.MatCode,a.SizeID,a.SizeName,
+        (a.NeedStockQty-a.TotalStockQty) AS Qty,
+        round((a.NeedStockQty-a.TotalStockQty)/b.MinPackageQty) * b.MinPackageQty as PackageQty,
+        a.CategoryName,a.MidCategoryName,
+        ddg.QuotePrice,
+        (a.NeedStockQty-a.TotalStockQty) NeedQty,
+        round((a.NeedStockQty-a.TotalStockQty)/b.MinPackageQty) AS OrderPackage,
+        b.MinPackageQty,b.SmallCategoryName,b.MatName
+        from issue_need_stock a
+        left join goods_info b on a.MatCode=b.MatCode
+        LEFT JOIN dws_dim_goods ddg ON a.MatCode = ddg.MatCode
+        where a.matcode='${matCode}' and a.sizeId='${sizeId}' and a.taskId=${taskId} and (a.NeedStockQty-a.TotalStockQty) > 0
+    </insert>
+
+    <insert id="addNotEnoughStockSku">
+        insert into issue_detail(TaskId,InShopID,MatCode,SizeID,SizeName,Qty,PackageQty,CategoryName,MidCategoryName,QuotePrice,NeedQty,OrderPackage,MinPackageQty,SmallCategoryName,MatName)
+        select
+        a.TaskId,a.ShopID,a.MatCode,a.SizeID,a.SizeName,
+        (a.NeedStockQty-a.TotalStockQty)/b.totalQty*${stockQty} as Qty,
+        round((a.NeedStockQty-a.TotalStockQty)/b.totalQty*${stockQty}/c.MinPackageQty) * c.MinPackageQty as PackageQty,
+        a.CategoryName,a.MidCategoryName,
+        ddg.QuotePrice,
+        (a.NeedStockQty-a.TotalStockQty) as NeedQty,
+        round((a.NeedStockQty-a.TotalStockQty)/b.totalQty*${stockQty}/c.MinPackageQty) OrderPackage,
+        c.MinPackageQty,c.SmallCategoryName,c.MatName
+        from issue_need_stock a
+        INNER JOIN(
+        select MatCode,SizeID,sum(NeedStockQty-TotalStockQty) as totalQty from issue_need_stock where matcode='${matCode}' and sizeId='${sizeId}' and taskId=${taskId} and NeedStockQty-TotalStockQty > 0
+        ) b on a.MatCode=b.MatCode and a.SizeID=b.SizeID
+        left JOIN goods_info c on a.MatCode=c.MatCode
+        LEFT JOIN dws_dim_goods ddg ON a.MatCode = ddg.MatCode
+        where a.matcode='${matCode}' and a.sizeId='${sizeId}' and a.taskId=${taskId} and (a.NeedStockQty-a.TotalStockQty) > 0
+    </insert>
+
+    <update id="createNewIssueInStock" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `ShopID` varchar(60) DEFAULT NULL,
+          `TaskId` int(10) DEFAULT NULL,
+          `MatCode` varchar(60) DEFAULT NULL,
+          `SizeID` varchar(60) DEFAULT NULL,
+          `QuotePrice` decimal(19,2) DEFAULT NULL,
+          `SizeName` varchar(60) DEFAULT NULL,
+          `AvgSaleAmt` decimal(19,4) DEFAULT NULL,
+          `AvgSaleQty` decimal(19,4) DEFAULT NULL,
+          `StockQty` bigint(20) DEFAULT NULL,
+          `PathStockQty` bigint(20) DEFAULT NULL,
+          `MoveQty` bigint(20) DEFAULT NULL,
+          `TotalStockQty` bigint(20) DEFAULT NULL COMMENT '总库存',
+          `WarehouseStockQty` bigint(20) DEFAULT NULL,
+          `NeedStockQtyInt` int(10) DEFAULT NULL,
+          `IsNew` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '是否新品',
+          `IsProhibited` tinyint(3) DEFAULT '0',
+          `CreatedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+          KEY `index_task_id` (`TaskId`) USING BTREE,
+          KEY `index_matcode` (`MatCode`) USING BTREE,
+          KEY `index_shopid` (`ShopID`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <!--
+    <update id="createNewIssueDetail" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `Id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+          `TaskId` int(10) DEFAULT NULL,
+          `InShopID` varchar(60) DEFAULT NULL,
+          `MatCode` varchar(60) DEFAULT NULL,
+          `SizeID` varchar(60) DEFAULT NULL,
+          `SizeName` varchar(10) DEFAULT '' COMMENT '尺码',
+          `MinPackageQty` int(10) DEFAULT '0' COMMENT '最小包装量',
+          `Qty` decimal(10,2) DEFAULT '0.00' COMMENT '实际配发数量',
+          `NeedQty` decimal(19,4) DEFAULT NULL COMMENT '动态需求量',
+          `PackageQty` decimal(10,2) DEFAULT '0.00' COMMENT '订货数量（件/个）',
+          `OrderPackage` int(11) DEFAULT '0' COMMENT '订货数量(包)',
+          `QuotePrice` decimal(19,2) DEFAULT '0.00',
+          `CategoryName` varchar(255) DEFAULT NULL COMMENT '大类名',
+          `MidCategoryName` varchar(255) DEFAULT NULL COMMENT '中类名',
+          `CreatedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+          `UpdatedAt` timestamp NULL DEFAULT NULL,
+          `SmallCategoryName` varchar(200) DEFAULT '' COMMENT '小类名',
+          PRIMARY KEY (`Id`) USING BTREE,
+          KEY `index_taskid` (`TaskId`) USING BTREE,
+          KEY `index_matcode` (`MatCode`) USING BTREE,
+          KEY `index_inshopid` (`InShopID`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+    -->
+
+
+</mapper>

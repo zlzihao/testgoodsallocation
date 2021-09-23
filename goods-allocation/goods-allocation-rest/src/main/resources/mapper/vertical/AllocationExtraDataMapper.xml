@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.vertical.AllocationExtraDataMapper" >
+
+    <select id="getRejectOutStockList" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select cc.Categorycode as categoryCode,aa.ShopID as shopId,aa.MatCode as matCode,
+              aa.SizeID as sizeId,bb.SizeName as sizeName,aa.AvgSaleQty as avgSaleQty,
+              bb.StockQty as stockQty,bb.PathStockQty as pathStockQty,MoveQty as applyStockQty,cc.QuotePrice as quotePrice
+        from (
+                select * from aps.aps_effect_28daily_saleqty where updatetime=date(now())-1
+        )aa
+        left join dws.dws_stok_sku_d bb on aa.ShopID= bb.ShopID and bb.OperationDate= date(now())-1 and aa.MatCode=bb.MatCode and aa.SizeID=bb.SizeID
+        left join dws.dws_saleStockMove_d cccc on date(cccc.billdate)= date(now())-1 and aa.ShopID=cccc.ShopID and aa.MatCode=cccc.MatCode and aa.SizeID=cccc.SizeID
+        left join dws.dws_dim_goods cc on aa.Matcode = cc.Matcode
+        where    aa.ShopID = #{shopId} and (bb.stockQty >0  or bb.PathStockQty>0 or MoveQty>0 )
+    </select>
+
+    <select id="getAvaliableSaleQty" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select ShopID as shopId,MatCode as  matCode,SizeID  as sizeId,AvgSaleQty as avgSaleQty
+        from aps.aps_effect_28daily_saleqty where updatetime=date(now())-1 and AvgSaleQty >= 0
+        <foreach collection="shopIdList" open="and ShopID IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+    </select>
+
+    <select id="getAvaliableSaleQtyByParam" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select ShopID as shopId,MatCode as  matCode,SizeID  as sizeId,AvgSaleQty as avgSaleQty
+        from aps.aps_effect_28daily_saleqty where updatetime=date(now())-1 and AvgSaleQty >= 0
+        <foreach collection="shopIdList" open="and ShopID IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        <foreach collection="matCodeList" open="and MatCode IN ("  close=")" separator="," item="matCode">
+            #{matCode}
+        </foreach>
+    </select>
+
+    <select id="getInStockBetweenSeven" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select m.InStockID as shopId,s.MatCode as matCode,s.SizeID as sizeId
+        from dwd.dwd_move_master m,dwd.dwd_move_size s
+        where s.BillNo = m.BillNo and (m.MoveType = 2 or m.MoveType = 3)
+        and date(m.InCheckDate) > date(now())-14
+        <foreach collection="shopIdList" open="and m.InStockID IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        order by m.InCheckDate asc
+    </select>
+
+    <select id="getOutStockBetweenFourteen" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select m.OutStockID as shopId,s.MatCode as matCode,s.SizeID as sizeId
+        from dwd.dwd_move_master m,dwd.dwd_move_size s
+        where s.BillNo = m.BillNo and (m.MoveType = 2 or m.MoveType = 4)
+        and date(m.InCheckDate) > date(now())-14
+        <foreach collection="shopIdList" open="and m.OutStockID IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        order by m.InCheckDate asc
+    </select>
+
+    <select id="getShopClothingList" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select distinct s.shopId,s.MatCode AS matCode,s.SizeID AS sizeId,s.StockQty as stockQty,s.PathStockQty as pathStockQty,g.CategoryCode as categoryCode
+        from dws.dws_stok_sku_d s,dws.dws_dim_goods g
+        where s.OperationDate= date(now())-1 and s.MatCode = g.MatCode
+        and (s.StockQty > 0 or s.PathStockQty > 0) and s.shopId is not null
+        <foreach collection="shopIdList" open="and s.shopId IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and s.MatCode IN ("  close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        <if test="categoryCodeSet == null">
+        and g.CategoryCode in ('W','M')
+        </if>
+        <if test="categoryCodeSet != null">
+            <foreach collection="categoryCodeSet" open="and g.CategoryCode IN ("  close=")" separator="," item="categoryCode">
+                #{categoryCode}
+            </foreach>
+        </if>
+        order by s.shopId
+    </select>
+
+    <select id="getShopClothingApplyList" resultType="cn.nome.saas.allocation.repository.entity.allocation.OutOfStockGoodsDO">
+        select distinct s.shopId,s.MatCode AS matCode,s.SizeID AS sizeId,s.moveQty as applyStockQty,g.CategoryCode as categoryCode
+        from dws.dws_saleStockMove_d s,dws.dws_dim_goods g
+        where date(s.billdate)= date(now())-1 and s.MatCode = g.MatCode and s.moveQty > 0
+         and s.shopId is not null
+        <foreach collection="shopIdList" open="and s.shopId IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        <if test="matCodeList != null">
+            <foreach collection="matCodeList" open="and s.MatCode IN ("  close=")" separator="," item="matCode">
+                #{matCode}
+            </foreach>
+        </if>
+        <if test="categoryCodeSet == null">
+            and g.CategoryCode in ('W','M')
+        </if>
+        <if test="categoryCodeSet != null">
+            <foreach collection="categoryCodeSet" open="and g.CategoryCode IN ("  close=")" separator="," item="categoryCode">
+                #{categoryCode}
+            </foreach>
+        </if>
+        order by s.shopId
+    </select>
+
+    <select id="getShopClothingSKC" resultType="cn.nome.saas.allocation.repository.entity.vertical.AllocationGoodsSKC">
+        select s.shopId as shopId,g.CategoryCode as categoryCode,count(distinct s.MatCode) as skcCount
+        from dws.dws_stok_sku_d s,dws.dws_dim_goods g
+        where s.OperationDate= date(now())-1 and s.MatCode = g.MatCode
+        and g.CategoryCode in ('W','M')
+        and (s.StockQty > 0 or s.PathStockQty > 0) and s.shopId is not null
+        <foreach collection="shopIdList" open="and s.shopId IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        group by s.shopId,g.CategoryCode
+        order by s.shopId
+    </select>
+
+    <select id="getShopApplyClothingSKC" resultType="cn.nome.saas.allocation.repository.entity.vertical.AllocationGoodsSKC">
+        select s.shopId as shopId,g.CategoryCode as categoryCode,count(distinct s.MatCode) as skcCount
+        from dws.dws_saleStockMove_d s,dws.dws_dim_goods g
+        where date(s.billdate)= date(now())-1 and s.MatCode = g.MatCode and s.moveQty > 0
+        and g.CategoryCode in ('W','M')  and s.shopId is not null
+        <foreach collection="shopIdList" open="and s.shopId IN ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+        group by s.shopId,g.CategoryCode
+        order by s.shopId
+    </select>
+
+
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.vertical.DwsGoodsDOMapper" >
+
+  <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.entity.vertical.DwsDimGoodsDO" >
+      <result column="CompanyNo" property="companyNo"  />
+      <result column="CompanyName" property="companyName"  />
+      <result column="StyleCode" property="styleCode"  />
+      <result column="MatId" property="matId"  />
+      <result column="MatCode" property="matCode"  />
+      <result column="MatName" property="matName"  />
+      <result column="Brand" property="brand" />
+      <result column="ColorCode" property="colorCode"  />
+      <result column="ColorName" property="colorName"  />
+      <result column="CategoryCode" property="categoryCode"  />
+      <result column="CategoryName" property="categoryName"  />
+      <result column="MidCategoryCode" property="midCategoryCode"  />
+      <result column="MidCategoryName" property="midCategoryName"  />
+      <result column="SmallCategoryCode" property="smallCategoryCode"  />
+      <result column="SmallCategoryName" property="smallCategoryName"  />
+      <result column="SubCategoryCode" property="subCategoryCode"  />
+      <result column="SubCategoryName" property="subCategoryName"  />
+      <result column="QuotePrice" property="quotePrice" />
+      <result column="SeriesNo" property="seriesNo"  />
+      <result column="SeriesName" property="seriesName"  />
+      <result column="MatLevelCode" property="matLevelCode"  />
+      <result column="MatLevelCodeName" property="matLevelCodeName"  />
+      <result column="YearNo" property="yearNo"  />
+      <result column="SeasonNO" property="seasonNo"  />
+      <result column="SeasonName" property="seasonName"  />
+      <result column="OrderAttribCode" property="orderAttribCode"  />
+      <result column="OrderAttribName" property="orderAttribName"  />
+      <result column="Designer" property="designer"  />
+      <result column="ElementCode" property="elementCode"  />
+      <result column="ElementName" property="elementName"  />
+      <result column="ClothesLenCode" property="clothesLenCode"  />
+      <result column="ClothesLenName" property="clothesLenName"  />
+      <result column="SleeveLenCode" property="sleeveLenCode"  />
+      <result column="SleeveLenName" property="sleeveLenName"  />
+      <result column="SleeveTypeCode" property="sleeveTypeCode"  />
+      <result column="SleeveTypeName" property="sleeveTypeName"  />
+      <result column="ThicknessCode" property="thicknessCode"  />
+      <result column="ThicknessName" property="thicknessName"  />
+      <result column="CollarTypeCode" property="collarTypeCode"  />
+      <result column="CollarTypeName" property="collarTypeName"  />
+      <result column="ClothesVerCode" property="clothesVerCode"  />
+      <result column="ClothesVerName" property="clothesVerName"  />
+      <result column="MatprofileCode" property="matprofileCode"  />
+      <result column="MatprofileName" property="matprofileName"  />
+      <result column="DesignNo" property="designNo"  />
+      <result column="OrderNo" property="orderNo"  />
+      <result column="SexCode" property="sexCode"  />
+      <result column="SexName" property="sexName"  />
+      <result column="MatTypeID" property="matTypeId"  />
+      <result column="MatTypeName" property="matTypeName"  />
+      <result column="ProSaleDate" property="proSaleDate"  />
+      <result column="PlanLifeCycleEndDay" property="planLifeCycleEndDay" />
+      <result column="LifeCycleDays" property="lifeCycleDays"  />
+      <result column="LoadTime" property="loadTime"  />
+      <result column="FactFOB" property="factFOB" />
+      <result column="MatProperty" property="matProperty"  />
+      <result column="BarCode" property="barCode"  />
+      <result column="NumberNo" property="numberNo"  />
+  </resultMap>
+
+    <select id="getCount" resultType="java.lang.Integer" >
+      select count(1)
+      from dws.dws_dim_goods
+  </select>
+
+  <select id="selectGoodsListByPage" resultMap="BaseResultMap" >
+      select CompanyNo, CompanyName, StyleCode, MatId, MatCode, MatName, Brand, ColorCode, ColorName, CategoryCode,
+              CategoryName, MidCategoryCode, MidCategoryName, SmallCategoryCode, SmallCategoryName, SubCategoryCode, SubCategoryName,
+              QuotePrice, SeriesNo, SeriesName, MatLevelCode, MatLevelCodeName, YearNo, SeasonNO, SeasonName, OrderAttribCode, OrderAttribName,
+              Designer, ElementCode, ElementName, ClothesLenCode, ClothesLenName, SleeveLenCode, SleeveLenName, SleeveTypeCode, SleeveTypeName,
+              ThicknessCode, ThicknessName, CollarTypeCode, CollarTypeName, ClothesVerCode, ClothesVerName, MatprofileCode, MatprofileName, DesignNo,
+              OrderNo, SexCode, SexName, MatTypeID, MatTypeName, ProSaleDate, PlanLifeCycleEndDay, LifeCycleDays, LoadTime, FactFOB, MatProperty, BarCode, NumberNo
+      from dws.dws_dim_goods
+      order by CategoryCode asc
+      offset #{offset,jdbcType=INTEGER} limit #{pageSize,jdbcType=INTEGER};
+  </select>
+
+
+</mapper>

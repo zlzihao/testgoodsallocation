@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.MinDisplaySkcDOMapper" >
+
+    <resultMap id="minDisplaySkcResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.MinDisplaySkcDO">
+        <result column="type" property="type" />
+        <result column="type_value" property="typeValue" />
+        <result column="qty" property="qty" />
+    </resultMap>
+
+    <select id="getMinDisplaySkcList" resultMap="minDisplaySkcResultMap">
+        select type,type_value,qty from min_display_skc
+    </select>
+
+
+
+    <select id="selectByPage" resultType="cn.nome.saas.allocation.model.issue.MinDisplaySkcData">
+        select
+        type  as Type ,type_value as TypeValue,qty as Qty
+        from
+        min_display_skc
+        <if test="offset != null and pageSize != null" >
+            limit #{offset,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(1) from
+        (select
+        type,type_value,qty
+        from
+        min_display_skc
+        ) a
+    </select>
+
+</mapper>

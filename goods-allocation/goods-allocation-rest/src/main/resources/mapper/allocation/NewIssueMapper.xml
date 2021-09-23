@@ -1,0 +1,1312 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.NewIssueDOMapper" >
+
+    <update id="truncateTable">
+		TRUNCATE TABLE ${tableName}
+	</update>
+
+    <update id="dropTableIfExist" >
+        <![CDATA[DROP TABLE IF EXISTS]]>
+            ${tableName}
+        <![CDATA[]]>;
+    </update>
+
+    <!--===========================================new_issue_out_stock======================================================================-->
+    <insert id="addIssueOutStock" parameterType="java.util.List">
+        insert into ${tableName} (warehouse_code,mat_code,size_name,stock_qty, remain_stock_qty) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.warehouseCode}, #{item.matCode}, #{item.sizeName}, #{item.stockQty}, #{item.stockQty})
+        </foreach>
+    </insert>
+
+    <update id="createIssueOutStockTab" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+          `warehouse_code` varchar(32)  DEFAULT '' COMMENT '仓库编码',
+          `mat_code` varchar(64)  DEFAULT '' COMMENT '商品编码',
+          `size_name` varchar(64)  DEFAULT '' COMMENT '商品尺码名称',
+          `quote_price` decimal(19,2) DEFAULT '0.00' COMMENT '单价',
+          `stock_qty` int(11) DEFAULT '0' COMMENT '总库存数量',
+          `remain_stock_qty` int(11) DEFAULT '0' COMMENT '分配完后剩余库存量',
+          PRIMARY KEY (`id`),
+          INDEX `idx_matcode`(`mat_code`) USING BTREE,
+          INDEX `idx_sizename`(`size_name`) USING BTREE,
+          INDEX `idx_warehouse`(`warehouse_code`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <insert id="bakIssueOutStock" parameterType="java.util.List">
+        insert into ${bakTabName}
+        (warehouse_code,mat_code,size_name,quote_price,stock_qty,remain_stock_qty)
+        select
+        warehouse_code,mat_code,size_name,quote_price,stock_qty,remain_stock_qty
+        from ${tabName}
+    </insert>
+
+    <update id="updOutRemainStock" parameterType="java.util.List">
+        update ${detailTabName} id left join ${outTabName} ios
+        on ios.mat_code = id.mat_code and ios.size_name = id.size_name and ios.warehouse_code = id.warehouse_code
+        set ios.remain_stock_qty = ios.remain_stock_qty + id.qty
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="and id.in_shop_id in (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </update>
+
+    <update id="createIssueDetailTab" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+          `in_shop_id` varchar(32)  DEFAULT NULL COMMENT '门店ID',
+          `category_name` varchar(32)  DEFAULT NULL COMMENT '大类名',
+          `mid_category_name` varchar(32)  DEFAULT NULL COMMENT '中类名',
+          `small_category_name` varchar(32)  DEFAULT NULL COMMENT '小类名',
+          `mat_name` varchar(128)  DEFAULT NULL COMMENT '商品名',
+          `mat_code` varchar(64)  DEFAULT NULL COMMENT '商品编码',
+          `size_id` varchar(64)  DEFAULT NULL COMMENT '尺码ID',
+          `size_name` varchar(16)  DEFAULT NULL COMMENT '尺码名  ',
+          `quote_price` decimal(19,2) DEFAULT NULL COMMENT '单价',
+          `min_package_qty` int(4) DEFAULT NULL COMMENT '最小中包数',
+          `qty` int(11) DEFAULT NULL COMMENT '实际配发量',
+          `need_qty` int(11) DEFAULT NULL COMMENT '配发需求量',
+          `package_qty` int(11) DEFAULT NULL COMMENT '中包商品数量（个/件）',
+          `order_package` int(11) DEFAULT NULL COMMENT '中包数',
+          `status` tinyint(2) DEFAULT 0 COMMENT '数据状态，0有效、2重算中',
+          `is_enough` tinyint(2) DEFAULT NULL COMMENT '是否足够库存分配标记',
+          `warehouse_code` varchar(32)  DEFAULT NULL COMMENT '分仓代码',
+          `created_at` timestamp NULL DEFAULT NULL COMMENT '创建时间',
+          `updated_at` timestamp NULL DEFAULT NULL COMMENT '更新时间',
+          PRIMARY KEY (`id`),
+          INDEX `idx_com`(`size_name`,`mat_code`,`in_shop_id`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <select id="getIssueOutStock" resultType="cn.nome.saas.allocation.model.issue.NewIssueOutStockDo">
+        select id, warehouse_code warehouseCode, mat_code matCode, size_name sizeName, quote_price quotePrice, stock_qty stockQty, remain_stock_qty remainStockQty
+        from ${tableName}
+        <!--form issue_out_stock-->
+        where 1 = 1
+        <if test="warehouseCode != null" >
+            and warehouse_code = #{warehouseCode}
+        </if>
+    </select>
+
+    <!--===========================================new_issue_goods_data======================================================================-->
+    <update id="createIssueGoodsDataTab" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+          `shop_id` varchar(128)  DEFAULT '' COMMENT '门店ID',
+          `mat_code` varchar(128)  DEFAULT '' COMMENT '商品编码',
+          `size_id` varchar(128)  DEFAULT '' COMMENT '尺码ID',
+          `size_name` varchar(128)  DEFAULT '' COMMENT '尺码名称',
+          `sale_qty7` int(11) DEFAULT '0' COMMENT '7天销量',
+          `sale_qty28` int(11) DEFAULT '0' COMMENT '28天销量',
+          `category_name` varchar(255) DEFAULT '0' COMMENT '大类名',
+          `mid_category_name` varchar(255) DEFAULT '0' COMMENT '中类名',
+          `small_category_name` varchar(255) DEFAULT '0' COMMENT '小类名',
+          `created_at` timestamp COMMENT '创建时间',
+          `goods_level` varchar(255) DEFAULT '' COMMENT '货盘等级',
+          `display_percent` decimal(10,2) DEFAULT '0.00' COMMENT '饱满度',
+          `size_count` int(10) DEFAULT '0' COMMENT '尺码数',
+          `mid_display_depth` int(10) DEFAULT '0' COMMENT '中类陈列量',
+          `small_display_depth` int(10) DEFAULT '0' COMMENT '小类陈列量',
+          `category_code` varchar(100) DEFAULT '' COMMENT '大类编码',
+          `shop_rank` int(11) COMMENT '门店排名',
+          `national_rank` int(11) COMMENT '全国排名',
+          `img` varchar(128) DEFAULT '' COMMENT '图片',
+          `display_qty` decimal(10,2) DEFAULT '0.00' COMMENT '仓位数',
+          `status` tinyint(2) DEFAULT 0 COMMENT '数据状态，0有效、2重算中',
+          PRIMARY KEY (`id`),
+          INDEX `idx_com`(`size_name`,`mat_code`,`shop_id`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <insert id="batchInsertGoodsData" parameterType="java.util.ArrayList">
+        insert into
+        ${tableName} (shop_id, mat_code,size_id,size_name,sale_qty7,sale_qty28,category_name,mid_category_name,small_category_name,goods_level,display_percent,
+        size_count,mid_display_depth,small_display_depth,category_code,shop_rank,national_rank, display_qty, status)
+        values
+        <foreach collection="importData" item="item" index="index"
+                 separator=",">
+            (
+            #{item.ShopID},
+            #{item.MatCode},
+            #{item.SizeID},
+            #{item.SizeName},
+            #{item.SaleQty7},
+            #{item.SaleQty28},
+            #{item.CategoryName},
+            #{item.MidCategoryName},
+            #{item.SmallCategoryName},
+            #{item.GoodsLevel},
+            #{item.DisplayPercent},
+            #{item.SizeCount},
+            #{item.MidDisplaydepth},
+            #{item.SmallDisplaydepth},
+            #{item.CategoryCode},
+            #{item.ShopRank},
+            #{item.NationalRank},
+            #{item.DisplayQty},
+            #{item.Status}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="bakGoodsData" parameterType="java.util.ArrayList">
+        insert into ${bakTabName}
+        (shop_id, mat_code,size_id,sale_qty7,sale_qty28,category_name,mid_category_name,small_category_name,goods_level,display_percent,
+        size_count,mid_display_depth,small_display_depth,category_code,shop_rank,national_rank, display_qty, status)
+        select
+        shop_id, mat_code,size_id,sale_qty7,sale_qty28,category_name,mid_category_name,small_category_name,goods_level,display_percent,
+        size_count,mid_display_depth,small_display_depth,category_code,shop_rank,national_rank, display_qty, status
+        from ${tabName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="and shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delGoodsDataByShopId">
+        delete from  ${tabName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+    <!--===========================================new_issue_in_stock======================================================================-->
+    <update id="createIssueInStockTab" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+          `shop_id` varchar(32)  DEFAULT '' COMMENT '店铺id',
+          `category_code` varchar(32)  DEFAULT '' COMMENT '大类分类编码',
+          `mat_code` varchar(64)  DEFAULT '' COMMENT '货号',
+          `quote_price` decimal(19,2) DEFAULT '0.00' COMMENT '单价',
+          `size_id` varchar(64)  DEFAULT '' COMMENT '尺码id',
+          `size_name` varchar(16)  DEFAULT '' COMMENT '尺码名称',
+          `avg_sale_amt` decimal(19,4) DEFAULT '0' COMMENT '日均销金额',
+          `avg_sale_qty` decimal(19,4) DEFAULT '0' COMMENT '日均销数量',
+          `stock_qty` decimal(19,4) DEFAULT '0' COMMENT '在店库存',
+          `path_stock_qty` decimal(19,4) DEFAULT '0' COMMENT '在途库存	',
+          `move_qty` decimal(19,4) DEFAULT '0' COMMENT '在配库存	',
+          `total_stock_qty` decimal(19,4) DEFAULT '0' COMMENT '总库存',
+          `is_new` tinyint(2) DEFAULT '0' COMMENT '是否新品',
+          `is_prohibited` tinyint(2) DEFAULT '0' COMMENT '是否禁配',
+          `rule_name` varchar(32)  DEFAULT '' COMMENT '规则名称	',
+          `security_qty` int(11) DEFAULT '0' COMMENT '保底量	',
+          `year_no` varchar(32) DEFAULT NULL  COMMENT '年份',
+          `season_name` varchar(32) DEFAULT NULL COMMENT '季节',
+          <!--`created_at` timestamp NULL DEFAULT NULL COMMENT '创建时间',-->
+          `category_name` varchar(32)  DEFAULT '' COMMENT '大类名',
+          `mid_category_name` varchar(32)  DEFAULT '' COMMENT '中类名	',
+          `small_category_name` varchar(32)  DEFAULT '' COMMENT '小类名',
+          `status` tinyint(2) DEFAULT '0' COMMENT '数据状态，0有效、2重算中',
+          `is_eliminate` tinyint(2) DEFAULT '0' COMMENT '是否淘汰品，0-否,1-是',
+          `sale_qty_28` decimal(19,4) DEFAULT '0' COMMENT '28天日均销数量',
+          `sale_qty_7` decimal(19,4) DEFAULT '0' COMMENT '7天日均销数量',
+          PRIMARY KEY (`id`),
+          INDEX `idx_shopid`(`shop_id`) USING BTREE,
+          INDEX `idx_com`(`size_name`,`mat_code`,`shop_id`) USING BTREE,
+          INDEX `idx_shopid_catename_midcatename`(`mid_category_name`,`category_name`,`shop_id`) USING BTREE
+        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <insert id="addIssueInStock" parameterType="java.util.List">
+        insert into  ${tableName} (
+        shop_id, quote_price, mat_code, size_id, size_name, avg_sale_amt, avg_sale_qty, stock_qty,
+        path_stock_qty, move_qty, total_stock_qty,
+        is_new, is_prohibited, year_no, season_name, rule_name, security_qty, category_code, category_name, mid_category_name, small_category_name, is_eliminate,
+        sale_qty_28, sale_qty_7) values
+        <foreach collection="list" item="item" index="index" separator=",">
+        (#{item.shopId},#{item.quotePrice},#{item.matCode},#{item.sizeId},#{item.sizeName},#{item.avgSaleAmt},#{item.avgSaleQty},#{item.stockQty},
+        #{item.pathStockQty},#{item.moveQty},#{item.totalStockQty},
+        #{item.isNew},#{item.isProhibited},#{item.yearNo}, #{item.seasonName}, #{item.ruleName}, #{item.securityQty}, #{item.categoryCode}, #{item.categoryName}, #{item.midCategoryName}, #{item.smallCategoryName}, #{item.isEliminate},
+        #{item.saleQty28},#{item.saleQty7})
+        </foreach>
+    </insert>
+
+    <update id="loadFileInStock">
+        load data local infile #{fullFileName} into table ${inTabName}
+        CHARACTER SET utf8
+        FIELDS TERMINATED BY '||'
+            OPTIONALLY ENCLOSED BY ''
+            ESCAPED BY '\\'
+        LINES TERMINATED BY '\n'
+        (shop_id, category_code, mat_code, quote_price, size_id, size_name, avg_sale_amt, avg_sale_qty, stock_qty, path_stock_qty, move_qty, total_stock_qty,
+        is_new, is_prohibited, year_no, season_name, rule_name, security_qty,  category_name, mid_category_name, small_category_name, is_eliminate, sale_qty_28, sale_qty_7)
+    </update>
+
+    <insert id="bakInStockData">
+        insert into ${bakTableName} (
+        shop_id, quote_price, mat_code, size_id, size_name, avg_sale_amt, avg_sale_qty, stock_qty,
+        path_stock_qty, move_qty, total_stock_qty,
+        is_new, is_prohibited, year_no, season_name, rule_name, security_qty, category_code, category_name, mid_category_name, is_eliminate)
+        select
+        shop_id, quote_price, mat_code, size_id, size_name, avg_sale_amt, avg_sale_qty, stock_qty,
+        path_stock_qty, move_qty, total_stock_qty,
+        is_new, is_prohibited, year_no, season_name, rule_name, security_qty, category_code, category_name, mid_category_name, is_eliminate
+        from ${tableName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delInStockByShopId">
+        delete from  ${tableName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+    <select id="issueInStockShopIds" resultType="java.lang.String">
+		<![CDATA[
+			SELECT DISTINCT shop_id FROM ${tableName} WHERE Status = 0
+	  ]]>
+	</select>
+
+    <select id="queryIssueGoodsData" resultType="cn.nome.saas.allocation.model.old.issue.IssueGoodsData">
+		SELECT iis.shop_id ShopID,iis.mat_code MatCode,iis.size_id SizeID,iis.size_name SizeName,gi.CategoryName,gi.MidCategoryName,gi.SmallCategoryName,gi.level GoodsLevel
+		,dv.displaydepth midDisplaydepth,dv.smallDisplaydepth
+		,iis.category_code CategoryCode, iis.sale_qty_28 saleQty28, iis.sale_qty_7 saleQty7
+		FROM ${tableName} iis
+		LEFT JOIN goods_info gi ON iis.mat_code = gi.MatCode
+		LEFT JOIN display_v2 dv ON gi.CategoryName = dv.CategoryName AND gi.MidCategoryName = dv.MidCategoryName AND gi.SmallCategoryName = dv.SmallCategoryName
+		WHERE iis.shop_id = #{shopId}
+	</select>
+
+    <!-- <select id="queryAllIssueGoodsData" resultType="cn.nome.saas.allocation.model.old.issue.IssueGoodsData">
+		SELECT iis.shop_id ShopID,iis.mat_code MatCode,iis.size_id SizeID,gi.CategoryName,gi.MidCategoryName,gi.SmallCategoryName,gi.level GoodsLevel
+		,dv.displaydepth midDisplaydepth,dv.smallDisplaydepth
+		,iis.category_code CategoryCode, iis.sale_qty_28 saleQty28, iis.sale_qty_7 saleQty7
+		FROM ${tableName} iis
+		LEFT JOIN goods_info gi ON iis.mat_code = gi.MatCode
+		LEFT JOIN display_v2 dv ON gi.CategoryName = dv.CategoryName AND gi.MidCategoryName = dv.MidCategoryName AND gi.SmallCategoryName = dv.SmallCategoryName
+        WHERE 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" open="and iis.shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+	</select> -->
+
+    <select id="loadAllDisplayDesignV" resultType="cn.nome.saas.allocation.model.issue.ShopDisplayDesignView">
+        select shopcode as ShopCode,shopid as ShopId,CategoryName as CategoryName
+        ,MidCategoryName as MidCategoryName,display_qty as Display_Qty,DisplayPercent as DisplayPercent
+         from shop_display_design_v
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" open="and shopid in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- <select id="queryGoodsData" resultType="cn.nome.saas.allocation.model.old.issue.IssueGoodsData">
+        select igd.mat_code MatCode,igd.size_id SizeID,igd.goods_level GoodsLevel, igd.sale_qty28 SaleQty28, igd.sale_qty7 SaleQty7,
+        igd.display_percent DisplayPercent,igd.mid_display_depth MidDisplaydepth,igd.small_display_depth SmallDisplaydepth,
+        igd.size_count SizeCount,igd.shop_rank ShopRank,igd.national_rank NationalRank, igd.display_qty displayQty
+        from ${tableName}  igd
+        where shop_id = #{shopId} AND status = 0
+        <if test="matCodes != null and matCodes.size > 0">
+            AND mat_code in
+            (
+            <foreach collection="matCodes" item="item" index="index" separator=",">
+                '${item}'
+            </foreach>
+            )
+        </if>
+        <if test="sizeIds != null and sizeIds.size > 0">
+            AND size_id in(
+            <foreach collection="sizeIds" item="item" index="index" separator=",">
+                '${item}'
+            </foreach>
+            )
+        </if>
+
+    </select>  -->
+
+    <select id="getIssueInStockList" resultType="cn.nome.saas.allocation.model.issue.NewIssueInStockDo">
+        select
+        iis.id, iis.shop_id shopId, iis.quote_price quotePrice, iis.mat_code matCode, iis.size_id sizeId, iis.size_name sizeName, iis.avg_sale_amt avgSaleAmt, iis.avg_sale_qty avgSaleQty, iis.stock_qty stockQty,
+        iis.path_stock_qty pathStockQty, iis.move_qty moveQty, iis.total_stock_qty totalStockQty,
+        iis.is_new isNew, iis.is_prohibited isProhibited, iis.year_no yearNo, iis.season_name seasonName, iis.rule_name ruleName, iis.security_qty securityQty, iis.category_code categoryCode,
+        (case when(iis.category_name = '儿童' and si.HaveChild = 1) then '家居' else iis.category_name end) as categoryName,
+        iis.mid_category_name midCategoryName, iis.small_category_name smallCategoryName, iis.is_eliminate isEliminate
+        from ${tableName} iis left join shop_info si on si.ShopID = iis.shop_id
+        <!--form issue_in_stock-->
+        where iis.is_prohibited = 0
+        <if test="shopIds != null and shopIds.size > 0">
+            AND iis.shop_id IN
+            <foreach collection="shopIds" item="shopId" index="index" open="(" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+        <!--排序耗时较长order by shop_id,category_name,mid_category_name desc-->
+    </select>
+
+    <select id="getIssueGoodsList" resultType="java.lang.String">
+        select CONCAT(sdd.shopId, "_", gi.matcode) from shop_display_design sdd
+        left join goods_info gi
+        on sdd.CategoryName = gi.CategoryName and sdd.midcategoryname = gi.midcategoryname
+        where sdd.Display_Qty > 0 and matcode is not null
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND sdd.shopId IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getMidCategorySale" resultType="cn.nome.saas.allocation.repository.entity.allocation.MidCategoryStockDO">
+        select  a.shop_id shopID, a.category_name as categoryName, a.mid_category_name as midCategoryName,avg(a.avg_sale_qty) as avgSaleQty
+        from ${tableName} a
+        where a.is_new='0' AND a.status = 0 and a.mid_category_name is not null
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" open="and a.shop_id in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        group by a.shop_id,a.category_name,a.mid_category_name
+        order by a.shop_id,a.category_name,a.mid_category_name
+  	</select>
+
+    <select id="getShopAvg" resultType="java.util.Map">
+        <![CDATA[
+			select shop_id shopId,round(avg(avg_sale_qty),2) as avgSaleQty
+        ]]>
+			from ${tableName}
+			where 1=1
+            <if test="shopIds != null and shopIds.size > 0">
+                <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+			group by shop_id
+
+    </select>
+
+    <select id="getEnoughStockSku" resultType="cn.nome.saas.allocation.model.old.allocation.Stock">
+	  <![CDATA[
+            SELECT a.matcode,a.sizeid,(a.StockQty-b.needTotalStockQty) as remainQty from  ${tableName}  a
+            left join(
+                select matcode,sizeid,sum(NeedStockQty-TotalStockQty) as needTotalStockQty
+                from ${tableName1}
+                where Status = 0 and NeedStockQty - TotalStockQty > 0
+                group by matcode,sizeid
+            ) b on a.matcode=b.matcode and a.sizeid=b.sizeid
+            where a.TaskId=${taskId} and (a.StockQty-b.needTotalStockQty)>=0 and warehouse_code = #{warehouseCode}
+	  ]]>
+	</select>
+
+    <select id="getNeedTotalStockQty" resultType="java.util.Map">
+        select MatCode matCode,SizeID sizeId,sum(NeedStockQty-TotalStockQty) totalQty
+        from ${tableName}
+        <!--form issue_need_stock-->
+        where status = 0
+        <foreach collection="shopSet" open="and shop_id in ("  close=")" separator="," item="shopId">
+            #{shopId}
+        </foreach>
+    </select>
+
+    <insert id="addIssueDetail" parameterType="java.util.List">
+        insert into  ${tableName} (
+        in_shop_id, category_name, mid_category_name, small_category_name, mat_name,mat_code, size_id, size_name,
+        quote_price, min_package_qty, qty, need_qty, package_qty,
+        order_package, status, is_enough, warehouse_code) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.inShopId},#{item.categoryName},#{item.midCategoryName},#{item.smallCategoryName},
+            #{item.matName},#{item.matCode},#{item.sizeId},#{item.sizeName},#{item.quotePrice},#{item.minPackageQty},
+            #{item.qty},#{item.needQty},#{item.packageQty},#{item.orderPackage},#{item.status},#{item.isEnough},
+            #{item.warehouseCode})
+        </foreach>
+    </insert>
+
+    <insert id="bakIssueDetail">
+        insert into ${bakTabName} (
+        in_shop_id, category_name, mid_category_name, small_category_name, mat_name,mat_code, size_id, size_name,
+        quote_price, min_package_qty, qty, need_qty, package_qty,
+        order_package, status, is_enough, warehouse_code, created_at, updated_at)
+        select
+        in_shop_id, category_name, mid_category_name, small_category_name, mat_name,mat_code, size_id, size_name,
+        quote_price, min_package_qty, qty, need_qty, package_qty,
+        order_package, status, is_enough, warehouse_code, created_at, updated_at
+        from ${tabName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND in_shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delIssueDetailByShopId">
+        delete from  ${tabName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND in_shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+    <update id="batchUpdateIssueNeedStock" parameterType="java.util.List">
+        update  ${tableName}
+        set
+          remain_need_qty =
+        <foreach collection="list" item="item" index="index" separator=" " open="case id" close="end">
+            when #{item.id} then #{item.remainNeedQty}
+        </foreach>
+        where
+          id in
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+    <update id="batchUpdateIssueInStock" parameterType="java.util.List">
+        update  ${tableName}
+        set
+          total_stock_qty =
+        <foreach collection="list" item="item" index="index" separator=" " open="case id" close="end">
+            when #{item.id} then #{item.totalStockQty}
+        </foreach>
+        where
+          id in
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+    <update id="batchUpdateIssueOutStock" parameterType="java.util.List">
+        update  ${tableName}
+        set
+        remain_stock_qty =
+        <foreach collection="list" item="item" index="index" separator=" " open="case id" close="end">
+            when #{item.id} then #{item.remainOutQty}
+        </foreach>
+        where
+        id in
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+    <select id="getGoodsDataCount" resultType="java.lang.Integer">
+        select count(*) from ${goodsDataTabName} where shop_id = #{shopId};
+    </select>
+
+    <insert id="insertExportOrderDetails">
+        INSERT INTO
+        export_order_detail(shop_code, shop_name, mat_code, mat_name, category_name,
+        mid_category_name, small_category_name, year_no, season_name, goods_level, quote_price,
+        min_package_qty, size_count, size_name, sale_qty_28,
+        sale_qty_7, valid_sale_qty, percent_avg_sale_qty, display_qty, avg_sale_qty, out_stock_qty,
+        remain_stock_qty, total_stock_qty, in_stock_qty, path_stock_qty, move_qty, issue_day,
+        safe_day, ex_issue_turnover_day, issue_flag, is_eliminate, package_qty, warehouse_code,
+        warehouse_name, order_package, sale_days, mid_display_depth, small_display_depth, display_percent,
+        shop_rank, national_rank, rule_name, security_qty, issue_qty, need_qty)
+        <foreach collection="orderDetails" item="item" open="VALUES" separator=",">
+            (#{item.shopCode}, #{item.shopName}, #{item.matCode},
+            #{item.matName}, #{item.categoryName}, #{item.midCategoryName},
+            #{item.smallCategoryName}, #{item.yearNo}, #{item.seasonName},
+            #{item.goodsLevel}, #{item.quotePrice}, #{item.minPackageQty},
+            #{item.sizeCount}, #{item.sizeName}, #{item.saleQty28},
+            #{item.saleQty7}, #{item.validSaleQty}, #{item.percentAvgSaleQty},
+            #{item.displayQty}, #{item.avgSaleQty}, #{item.outStockQty},
+            #{item.remainStockQty}, #{item.totalStockQty}, #{item.inStockQty},
+            #{item.pathStockQty}, #{item.moveQty}, #{item.issueDay},
+            #{item.safeDay}, #{item.exIssueTurnoverDay}, #{item.issueFlag},
+            #{item.isEliminate}, #{item.packageQty}, #{item.warehouseCode},
+            #{item.warehouseName}, #{item.orderPackage}, #{item.saleDays},
+            #{item.midDisplaydepth}, #{item.smallDisplaydepth}, #{item.displayPercent},
+            #{item.shopRank}, #{item.nationalRank}, #{item.ruleName},
+            #{item.securityQty}, #{item.orderPackage} * #{item.minPackageQty}, #{item.needQty})
+        </foreach>
+    </insert>
+
+    <select id="selectAllShopIds" resultType="java.lang.String">
+        select
+        distinct in_shop_id
+        from ${tableName}
+    </select>
+
+    <select id="getOrderDetail" resultType="cn.nome.saas.allocation.model.old.issue.OrderDetailDo">
+        SELECT
+        isd.in_shop_id shopId,isd.need_qty needQty,isd.package_qty packageQty,isd.order_package orderPackage
+        ,isd.mat_code matCode,isd.mat_name matName,isd.quote_price quotePrice,isd.size_id sizeId,isd.size_name sizeName
+        ,isd.category_name categoryName,isd.mid_category_name midCategoryName,isd.small_category_name smallCategoryName
+        ,isd.min_package_qty minPackageQty, ins.percent_category percentCategory
+        ,ios.stock_qty outStockQty, ios.remain_stock_qty remainStockQty
+        ,swc.warehouse_code1 warehouseCode, swc.remark warehouseName
+        ,iis.avg_sale_qty avgSaleQty
+        ,iis.total_stock_qty totalStockQty
+        ,iis.year_no yearNo
+        ,iis.season_name seasonName
+        ,iis.stock_qty inStockQty
+        ,iis.path_stock_qty pathStockQty
+        ,iis.move_qty moveQty
+        ,iis.rule_name ruleName
+        ,iis.security_qty securityQty
+        ,iis.is_eliminate isEliminate
+        ,igd.goods_level  goodsLevel
+        ,igd.sale_qty28  saleQty28
+        ,igd.sale_qty7  saleQty7
+        ,igd.display_percent  displayPercent
+        ,igd.mid_display_depth  midDisplayDepth
+        ,igd.small_display_depth  smallDisplayDepth
+        ,igd.size_count  sizeCount
+        ,igd.shop_rank  shopRank
+        ,igd.national_rank  nationalRank
+        ,igd.display_qty  displayQty
+        FROM ${detailTabName} isd
+        LEFT JOIN ${outTabName} ios ON isd.mat_code = ios.mat_code AND isd.size_name = ios.size_name and ios.warehouse_code = isd.warehouse_code
+        LEFT JOIN  ${inTabName}  iis ON isd.in_shop_id = iis.shop_id and isd.mat_code = iis.mat_code AND isd.size_name = iis.size_name
+        LEFT JOIN  ${needTabName}  ins ON  isd.in_shop_id = ins.shop_id and isd.mat_code = ins.mat_code AND isd.size_name = ins.size_name
+        LEFT JOIN  (select distinct warehouse_code,warehouse_code1,remark from sub_warehouse_config) swc ON swc.warehouse_code  = ios.warehouse_code
+        LEFT JOIN ${goodsDataTabName} igd ON igd.Shop_ID = isd.in_shop_id and isd.Mat_Code = igd.Mat_Code AND isd.Size_name = igd.Size_name
+        WHERE isd.in_shop_id = #{detailParam.shopId} AND isd.Status = 0
+        <if test="detailParam.categoryName != null and detailParam.categoryName!=''">
+            <foreach item="item" index="index" collection="detailParam.categoryName.split(',')" open="AND isd.category_name in (" separator="," close=")">#{item}</foreach>
+        </if>
+        <if test="detailParam.midCategoryName != null">
+            AND isd.mid_category_name = #{detailParam.midCategoryName}
+        </if>
+        <if test="detailParam.smallCategoryName != null">
+            AND isd.small_category_name = #{detailParam.smallCategoryName}
+        </if>
+        <!--
+        <if test="detailParam.pageSize != null and detailParam.offset != null">
+            limit #{detailParam.pageSize} offset #{detailParam.offset}
+        </if>
+        -->
+    </select>
+
+    <select id="getOrderListCount" resultType="Integer">
+        SELECT COUNT(*)
+        FROM (
+        select in_shop_id as ShopID from ${tableName} where status = 0
+        <if test="orderListParam.shopIds != null and orderListParam.shopIds.size > 0">
+            AND in_shop_id IN
+            <foreach collection="orderListParam.shopIds" item="shopId" index="index"
+                     open="(" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="orderListParam.createdBegin != null and orderListParam.createdEnd != null">
+            AND CreatedAt BETWEEN #{orderListParam.createdBegin} AND #{orderListParam.createdEnd}
+        </if>
+        group by in_shop_id
+        ) isd
+        LEFT JOIN dws_dim_shop dds ON isd.ShopID = dds.ShopID
+        LEFT JOIN shop_info si ON isd.ShopID = si.ShopID
+        WHERE 1 = 1
+        <if test="orderListParam.shopName != null">
+            AND ShopName like concat('%', #{orderListParam.shopName}, '%')
+        </if>
+        <if test="orderListParam.regioneName != null">
+            AND RegioneBusName = #{orderListParam.regioneName}
+        </if>
+        <if test="orderListParam.subRegoneName != null">
+            AND SubRegioneBusName = #{orderListParam.subRegoneName}
+        </if>
+        <if test="orderListParam.cityName != null">
+            AND CityName = #{orderListParam.cityName}
+        </if>
+        <if test="orderListParam.userName != null">
+            AND si.UserName = #{orderListParam.userName}
+        </if>
+        <if test="orderListParam.issueTime != null">
+            AND si.IssueTime IN
+            <foreach collection="orderListParam.issueTime" item="item" index="index"
+                     open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getOrderList" resultType="cn.nome.saas.allocation.model.old.issue.OrderListDo">
+        SELECT isd.ShopID shopId,
+        <!--ist.created_at createdAt, -->
+        isd.PackageQty packageQty,isd.PackageVal packageVal,
+        dds.ShopName shopName,dds.RegioneBusName regioneName,dds.SubRegioneBusName subRegoneName,dds.CityName cityName,
+        si.IssueTime issueTime,si.RoadDay onRoadDay
+        ,rc.recalcId,rc.recalcTime,rc.percent,rc.status
+        FROM (
+        SELECT in_shop_id as ShopID, sum(order_package * min_package_qty) as PackageQty,sum(order_package * min_package_qty *
+        quote_price) as PackageVal FROM ${tableName}
+        WHERE status = 0
+        <if test="orderListParam.shopIds != null and orderListParam.shopIds.size > 0">
+            AND in_shop_id IN
+            <foreach collection="orderListParam.shopIds" item="shopId" index="index"
+                     open="(" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="orderListParam.createdBegin != null and orderListParam.createdEnd != null">
+            AND CreatedAt BETWEEN #{orderListParam.createdBegin} AND #{orderListParam.createdEnd}
+        </if>
+        group by in_shop_id
+        ) isd
+        LEFT JOIN dws_dim_shop dds ON isd.ShopID = dds.ShopID
+        LEFT JOIN shop_info si ON isd.ShopID = si.ShopID
+        LEFT JOIN (
+        SELECT id recalcId,shop_id shopId,updated_at recalcTime,task_id taskId,task_percent percent,task_status status
+        FROM issue_recale_task_new WHERE id IN (SELECT MAX(id) FROM issue_recale_task_new
+        WHERE task_status IN (0,1,2) AND TO_DAYS(created_at) = TO_DAYS(NOW()) GROUP BY task_id,shop_id)
+        ) rc ON  isd.ShopID = rc.shopId AND rc.taskId = #{orderListParam.taskId}
+        WHERE 1 = 1
+        <if test="orderListParam.shopName != null">
+            AND ShopName like concat('%', #{orderListParam.shopName}, '%')
+        </if>
+        <if test="orderListParam.regioneName != null">
+            AND RegioneBusName = #{orderListParam.regioneName}
+        </if>
+        <if test="orderListParam.subRegoneName != null">
+            AND SubRegioneBusName = #{orderListParam.subRegoneName}
+        </if>
+        <if test="orderListParam.cityName != null">
+            AND CityName = #{orderListParam.cityName}
+        </if>
+        <if test="orderListParam.userName != null">
+            AND si.UserName = #{orderListParam.userName}
+        </if>
+        <if test="orderListParam.issueTime != null">
+            AND si.IssueTime IN
+            <foreach collection="orderListParam.issueTime" item="item" index="index"
+                     open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY isd.ShopID
+        <if test="orderListParam.pageSize != null and orderListParam.offset != null">
+            limit #{orderListParam.pageSize} offset #{orderListParam.offset}
+        </if>
+    </select>
+
+    <select id="getMatCategoryDetail" resultType="cn.nome.saas.allocation.model.old.issue.MatCategoryDetailDo">
+
+        SELECT g.CategoryName categoryName,isd.orderAmt,mc.needQty,isd.orderQty,g.avgSaleQty,dy.displayDepth,sddv.displayQty,sddv.displayPercent,g.moveQty,g.pathStockQty,g.stockQty,
+        icd.NewSkcCount,icd.ProhibitedSkcCount,icd.ValidSkcCount,icd.KeepSkcCount,icd.CanSkcCount
+        FROM (
+        SELECT category_name CategoryName,sum(avg_sale_qty) avgSaleQty,sum(move_qty) moveQty,sum(path_stock_qty) pathStockQty,sum(stock_qty) stockQty
+        FROM ${inTableName} iis
+        LEFT JOIN goods_info gi on iis.mat_code = gi.MatCode
+        WHERE shop_id=#{shopId} AND iis.Status = 0
+        <if test="categoryName != null">
+            AND category_name = #{categoryName}
+        </if>
+        AND category_name IS NOT NULL
+        GROUP BY category_name
+        ) g
+        LEFT JOIN
+        (
+        SELECT category_name CategoryName,SUM(order_package * min_package_qty) orderQty,SUM(order_package * min_package_qty * quote_price) orderAmt
+        FROM ${detailTableName}
+        WHERE in_shop_id = #{shopId} AND status = 0
+        GROUP BY category_name
+        ) isd ON g.CategoryName = isd.CategoryName
+        LEFT JOIN (
+        SELECT category_name CategoryName ,SUM(mid_need_qty) needQty
+        FROM ${midTableName}
+        WHERE shop_id = #{shopId} AND Status = 0 GROUP BY category_name
+        ) mc ON g.CategoryName = mc.CategoryName
+        LEFT JOIN (
+        SELECT CategoryName ,SUM(displaydepth) displayDepth
+        FROM display_v GROUP BY CategoryName
+        ) dy ON g.CategoryName = dy.CategoryName
+        LEFT JOIN (
+        SELECT CategoryName ,SUM(display_qty) displayQty,max(DisplayPercent) displayPercent
+        FROM shop_display_design_v WHERE shopid = #{shopId}
+        GROUP BY CategoryName
+        ) sddv ON sddv.CategoryName = g.CategoryName
+        LEFT JOIN (
+        SELECT category_name CategoryName, new_skc_count NewSkcCount, prohibited_skc_count ProhibitedSkcCount, valid_skc_count ValidSkcCount,
+        keep_skc_count KeepSkcCount, can_skc_count CanSkcCount FROM ${categoryDataTableName}
+        WHERE shop_id = #{shopId} AND status = 0
+        ) icd ON icd.CategoryName = g.CategoryName
+
+    </select>
+
+    <select id="getMatMidCategoryDetail" resultType="cn.nome.saas.allocation.model.old.issue.MatCategoryDetailDo">
+		SELECT g.MidCategoryName categoryName,isd.orderAmt,mc.needQty,g.avgSaleQty,isd.orderQty,dy.displayDepth,sddv.displayQty,sddv.displayPercent,g.moveQty,g.pathStockQty,g.stockQty,icd.NewSkcCount,icd.ProhibitedSkcCount,icd.ValidSkcCount,icd.KeepSkcCount,icd.CanSkcCount
+		FROM (
+		SELECT category_name CategoryName,mid_category_name MidCategoryName,sum(avg_sale_qty) avgSaleQty,sum(move_qty) moveQty,sum(path_stock_qty) pathStockQty,sum(stock_qty) stockQty
+		FROM ${inTableName} iis LEFT JOIN goods_info gi ON iis.mat_code = gi.MatCode
+		WHERE shop_id= #{shopId} AND iis.Status = 0
+		AND category_name = #{categoryName}
+		GROUP BY mid_category_name
+		) g
+		LEFT JOIN
+		(
+		SELECT category_name CategoryName,mid_category_name MidCategoryName,SUM(order_package * min_package_qty) orderQty,SUM(order_package * min_package_qty * quote_price) orderAmt
+		FROM ${detailTableName}
+		WHERE in_shop_id = #{shopId} AND Status = 0
+		AND category_name = #{categoryName}
+		GROUP BY mid_category_name
+		) isd
+		ON g.CategoryName = isd.CategoryName AND g.MidCategoryName = isd.MidCategoryName
+		LEFT JOIN (
+		SELECT mid_category_name MidCategoryName ,SUM(mid_need_qty) needQty
+		FROM ${midTableName}
+		WHERE shop_id = #{shopId} AND category_name = #{categoryName} AND Status = 0 GROUP BY mid_category_name
+		) mc ON g.MidCategoryName = mc.MidCategoryName
+		LEFT JOIN (
+		SELECT MidCategoryName ,SUM(displaydepth) displayDepth
+		FROM display_v
+		WHERE CategoryName = #{categoryName} GROUP BY MidCategoryName
+		) dy ON g.MidCategoryName = dy.MidCategoryName
+		LEFT JOIN (
+		SELECT MidCategoryName ,SUM(display_qty) displayQty,max(DisplayPercent) displayPercent
+		FROM shop_display_design_v
+		WHERE shopid = #{shopId} AND CategoryName = #{categoryName} GROUP BY MidCategoryName
+		) sddv ON sddv.MidCategoryName = g.MidCategoryName
+		LEFT JOIN (
+		SELECT NewSkcCount,ProhibitedSkcCount,ValidSkcCount,KeepSkcCount,CanSkcCount,MidCategoryName FROM issue_midcategory_data
+		WHERE ShopID = #{shopId} AND CategoryName = #{categoryName} AND Status = 0
+		) icd ON g.MidCategoryName = icd.MidCategoryName
+	</select>
+
+
+    <select id="getLastTask" resultType="cn.nome.saas.allocation.model.old.issue.IssueTaskVo">
+		SELECT id taskId,run_time runTime, remark FROM issue_task_new WHERE task_status = 1 AND ready = 1 ORDER BY id DESC LIMIT 1
+	</select>
+
+    <select id="getLastReRunTask" resultType="cn.nome.saas.allocation.model.old.issue.IssueTaskVo">
+		SELECT id taskId,run_time runTime, remark FROM issue_task_new WHERE task_status = 2 AND ready = 1  AND created_at > SUBDATE(NOW(),INTERVAL 5 HOUR) ORDER BY id DESC LIMIT 1
+	</select>
+
+    <select id="getIssueTask" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueTaskDO">
+		SELECT task_status taskStatus, task_type taskType, created_at createdAt,id,name,run_time runTime FROM issue_task_new WHERE id = #{taskId}
+	</select>
+
+    <select id="getRunningIssueTask" resultType="java.lang.Integer">
+      select sum(a.cnt) from (
+        select count(1) as cnt from issue_task_new
+        where task_status != 1
+        and date_format(run_time,'%Y-%m-%d') = date_format(now(),'%Y-%m-%d')
+        union
+        select count(1) as cnt from issue_recale_task_new
+        where task_status in (0,2)
+        and date_format(run_time,'%Y-%m-%d') = date_format(now(),'%Y-%m-%d')
+        ) a
+    </select>
+
+
+    <select id="getSkcCountCategorys" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT distinct iis.shop_id as shopId,iis.category_name AS categoryName FROM ${instockTableName} iis
+        WHERE  iis.status = 0 AND iis.category_name IS NOT NULL
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        ORDER BY iis.shop_id,iis.category_name
+    </select>
+
+    <select id="getSkcCountMidCategorys" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT distinct iis.shop_id as shopId,iis.category_name AS categoryName ,iis.mid_category_name AS midCategoryName FROM ${instockTableName} iis
+        WHERE  iis.status = 0 AND iis.category_name IS NOT NULL
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        ORDER BY iis.shop_id,iis.category_name,iis.mid_category_name
+    </select>
+
+
+    <select id="calcCategoryCanSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        LEFT JOIN goods_info gi on iis.mat_code = gi.MatCode
+        LEFT JOIN ${outstockTableName} ios ON iis.mat_code = ios.mat_code
+        WHERE iis.mat_code >= gi.MinPackageQty AND iis.status = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name
+        order by iis.shop_id,iis.category_name desc
+    </select>
+
+    <select id="calcCategoryKeepSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.security_qty >= 1 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name
+        order by iis.shop_id,iis.category_name desc
+    </select>
+
+    <select id="calcCategoryNewSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.is_new = 1 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name
+        order by iis.shop_id,iis.category_name desc
+    </select>
+
+    <select id="calcCategoryProhibitedSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.is_prohibited = 1 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name
+        order by iis.shop_id,iis.category_name desc
+    </select>
+
+    <select id="calcCategoryValidSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.stock_qty >= 5 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        group by iis.shop_id,iis.category_name
+        order by iis.shop_id,iis.category_name desc
+    </select>
+
+    <select id="calcMidCategoryCanSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+		SELECT iis.shop_id as shopId,iis.category_name as categoryName,iis.mid_category_name as midCategoryName,COUNT(1) count
+		FROM ${instockTableName} iis
+		LEFT JOIN goods_info gi on iis.mat_code = gi.MatCode
+		LEFT JOIN ${outstockTableName} ios ON iis.mat_code = ios.mat_code
+		WHERE iis.mat_code >= gi.MinPackageQty AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+		group by iis.shop_id,iis.category_name,iis.mid_category_name
+		order by iis.shop_id,iis.category_name,iis.mid_category_name desc
+    </select>
+
+    <select id="calcMidCategoryKeepSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,iis.mid_category_name as midCategoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.security_qty >= 1 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name,iis.mid_category_name
+        order by iis.shop_id,iis.category_name,iis.mid_category_name desc
+    </select>
+
+    <select id="calcMidCategoryNewSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,iis.mid_category_name as midCategoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.is_new = 1 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name,iis.mid_category_name
+        order by iis.shop_id,iis.category_name,iis.mid_category_name desc
+    </select>
+
+    <select id="calcMidCategoryProhibitedSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,iis.mid_category_name as midCategoryName,COUNT(1) count
+        FROM ${instockTableName} iis
+        WHERE iis.is_prohibited = 1 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+        AND iis.shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index"
+                 open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+        group by iis.shop_id,iis.category_name,iis.mid_category_name
+        order by iis.shop_id,iis.category_name,iis.mid_category_name desc
+    </select>
+
+    <select id="calcMidCategoryValidSkcCount" resultType="cn.nome.saas.allocation.model.old.issue.NewCategorySkcData">
+        SELECT iis.shop_id as shopId,iis.category_name as categoryName,iis.mid_category_name as midCategoryName,COUNT(1) count
+		FROM ${instockTableName} iis
+		WHERE iis.stock_qty >= 5 AND iis.status = 0 AND iis.is_prohibited = 0 and  iis.is_eliminate = 0
+		group by iis.shop_id,iis.category_name,iis.mid_category_name
+		order by iis.shop_id,iis.category_name,iis.mid_category_name desc
+    </select>
+
+    <update id="createCategoryCountTable" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `ID` int(11) NOT NULL AUTO_INCREMENT,
+          `shop_id` varchar(100) DEFAULT '',
+          `category_name` varchar(50) DEFAULT '',
+          `new_skc_count` int(11) DEFAULT '0' COMMENT '新品SKC数量',
+          `prohibited_skc_count` int(11) DEFAULT '0' COMMENT '禁配SKC数',
+          `valid_skc_count` int(11) DEFAULT '0' COMMENT '有效SKC数量',
+          `keep_skc_count` int(11) DEFAULT '0' COMMENT '保底SKC数量',
+          `can_skc_count` int(11) DEFAULT '0' COMMENT '可下SKC数量',
+          `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+          `status` int(2) DEFAULT '0' COMMENT '2重算中',
+          PRIMARY KEY (`ID`) USING BTREE,
+          KEY `idx_CategoryName` (`category_name`) USING BTREE,
+          KEY `idx_ShopID` (`shop_id`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <update id="createMidCategoryCountTable" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+        `ID` int(11) NOT NULL AUTO_INCREMENT,
+        `shop_id` varchar(100) DEFAULT '',
+        `category_name` varchar(50) DEFAULT '',
+        `mid_category_name` varchar(100) DEFAULT '',
+        `new_skc_count` int(11) DEFAULT '0' COMMENT '新品SKC数量',
+        `prohibited_skc_count` int(11) DEFAULT '0' COMMENT '禁配SKC数',
+        `valid_skc_count` int(11) DEFAULT '0' COMMENT '有效SKC数量',
+        `keep_skc_count` int(11) DEFAULT '0' COMMENT '保底SKC数量',
+        `can_skc_count` int(11) DEFAULT '0' COMMENT '可下SKC数量',
+        `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        `status` int(2) DEFAULT '0' COMMENT '2重算中',
+        PRIMARY KEY (`ID`) USING BTREE,
+        KEY `idx_CategoryName` (`category_name`) USING BTREE,
+        KEY `idx_ShopID` (`shop_id`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <insert id="insertCategoryCountData">
+        insert into
+        ${tableName}(shop_id,category_name,
+        new_skc_count,prohibited_skc_count,valid_skc_count,keep_skc_count,can_skc_count)
+        values
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (
+            #{item.shopID},
+            #{item.categoryName},
+            #{item.newSkcCount},
+            #{item.prohibitedSkcCount},
+            #{item.validSkcCount},
+            #{item.keepSkcCount},
+            #{item.canSkcCount}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="bakCategoryCountData">
+        insert into ${bakTabName}
+        (shop_id,category_name,
+        new_skc_count,prohibited_skc_count,valid_skc_count,keep_skc_count,can_skc_count)
+        select
+        shop_id,category_name,
+        new_skc_count,prohibited_skc_count,valid_skc_count,keep_skc_count,can_skc_count
+        from ${tabName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="and shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delCategoryCountDataByShopId">
+        delete from  ${tableName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+    <insert id="insertMidCategoryCountData">
+        insert into
+        ${tableName}(shop_id,category_name,mid_category_name,
+        new_skc_count,prohibited_skc_count,valid_skc_count,keep_skc_count,can_skc_count)
+        values
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (
+            #{item.shopID},
+            #{item.categoryName},
+            #{item.midCategoryName},
+            #{item.newSkcCount},
+            #{item.prohibitedSkcCount},
+            #{item.validSkcCount},
+            #{item.keepSkcCount},
+            #{item.canSkcCount}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="bakMidCategoryCountData">
+        insert into ${bakTabName}
+        (shop_id,category_name,mid_category_name,
+        new_skc_count,prohibited_skc_count,valid_skc_count,keep_skc_count,can_skc_count)
+        select
+        shop_id,category_name,mid_category_name,
+        new_skc_count,prohibited_skc_count,valid_skc_count,keep_skc_count,can_skc_count
+        from ${tabName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="and shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delMidCategoryCountDataByShopId">
+        delete from  ${tableName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+    <select id="categoryList" resultType="java.lang.String">
+		<![CDATA[
+			SELECT DISTINCT category_name FROM ${tableName} WHERE in_shop_id = #{shopId} AND Status = 0
+		]]>
+	</select>
+
+    <select id="allMidCategorys" resultType="java.lang.String">
+		<![CDATA[
+			SELECT DISTINCT mid_category_name FROM ${tableName} WHERE in_shop_id = #{shopId} AND Status = 0
+		]]>
+	</select>
+    <select id="midCategorys" resultType="java.lang.String">
+		<![CDATA[
+			SELECT DISTINCT mid_category_name FROM ${tableName} WHERE in_shop_id = #{shopId} AND category_name = #{categoryName} AND Status = 0
+		]]>
+	</select>
+
+    <select id="allSmallCategorys" resultType="java.lang.String">
+		<![CDATA[
+			SELECT DISTINCT small_category_name FROM ${tableName} WHERE in_shop_id = #{shopId} AND Status = 0
+		]]>
+	</select>
+    <select id="smallCategorys" resultType="java.lang.String">
+		<![CDATA[
+			SELECT DISTINCT small_category_name FROM ${tableName}
+			WHERE in_shop_id = #{shopId} AND mid_category_name = #{midCategoryName} AND Status = 0
+		]]>
+	</select>
+
+    <select id="getIssueUndoDetail" resultType="cn.nome.saas.allocation.model.old.issue.OrderDetailDo">
+        SELECT
+		ud.Shop_ID shopId,0 packageQty,0 orderPackage
+		,ud.Mat_Code matCode
+		,gi.matName
+		,ud.Quote_Price quotePrice,ud.Size_ID sizeId,ud.Size_Name sizeName
+		,IFNULL(ud.Category_Name,'') categoryName
+        ,IFNULL(ud.Mid_Category_Name,'') midCategoryName
+		,IFNULL(gi.smallCategoryName,'') smallCategoryName
+		,gi.minPackageQty
+		,ins.Percent_Category percentCategory
+		,ios.Stock_Qty outStockQty
+        ,ud.avg_sale_qty avgSaleQty
+        ,ud.total_stock_qty totalStockQty
+        ,ud.year_no yearNo
+        ,ud.season_name seasonName
+        ,ud.stock_qty inStockQty
+        ,ud.path_stock_qty pathStockQty
+        ,ud.move_qty moveQty
+        ,ud.rule_name ruleName
+        ,ud.security_qty securityQty
+        ,ud.is_eliminate isEliminate
+        ,igd.goods_level  goodsLevel
+        ,igd.sale_qty28  saleQty28
+        ,igd.sale_qty7  saleQty7
+        ,igd.display_percent  displayPercent
+        ,igd.mid_display_depth  midDisplayDepth
+        ,igd.small_display_depth  smallDisplayDepth
+        ,igd.size_count  sizeCount
+        ,igd.shop_rank  shopRank
+        ,igd.national_rank  nationalRank
+        ,igd.display_qty  displayQty
+		FROM (
+            SELECT
+            iis.Shop_ID,iis.Mat_Code,iis.Size_ID,iis.Size_Name,iis.Category_Name,iis.Mid_Category_Name,iis.Quote_Price,iis.Is_New,
+            iis.Is_Prohibited,iis.Avg_Sale_Qty,iis.Stock_Qty,iis.Total_Stock_Qty, iis.Year_No, iis.Season_Name, iis.Path_Stock_Qty, iis.Move_Qty, iis.Rule_Name, iis.security_Qty,
+            iis.Status, iis.Is_Eliminate
+                    FROM ${inTabName} iis
+                    left join ${detailTabName} isd on isd.In_Shop_ID = iis.Shop_ID AND isd.Mat_Code = iis.Mat_Code AND isd.Size_name = iis.Size_name
+                    WHERE iis.Shop_ID= #{detailParam.shopId} and isd.status is null
+            ) ud
+        LEFT JOIN
+          (select swsm.shop_id, io.Mat_Code, io.Size_name, sum(io.Stock_Qty) stock_qty from
+          sub_warehouse_shop_mapping swsm left join ${outTabName} io on swsm.warehouse_code = io.warehouse_code WHERE swsm.Shop_ID = #{detailParam.shopId} group by swsm.shop_id, io.Mat_Code, io.Size_name ) ios
+        ON ud.shop_id = ios.shop_id AND ud.Mat_Code = ios.Mat_Code AND ud.Size_Name = ios.Size_name
+        LEFT JOIN ${needTabName} ins ON ins.Shop_ID = ud.Shop_ID and ud.Mat_Code = ins.Mat_Code AND ud.Size_name = ins.Size_name
+        LEFT JOIN ${goodsDataTabName} igd ON igd.Shop_ID = ud.Shop_ID and ud.Mat_Code = igd.Mat_Code AND ud.Size_name = igd.Size_name
+		LEFT JOIN goods_info gi ON gi.MatCode = ud.Mat_Code
+        WHERE 1 = 1
+        <if test="detailParam.categoryName != null and detailParam.categoryName!=''">
+            <foreach item="item" index="index" collection="detailParam.categoryName.split(',')" open="AND ud.Category_Name in (" separator="," close=")">#{item}</foreach>
+        </if>
+        <if test="detailParam.midCategoryName != null">
+            AND ud.Mid_Category_Name = #{detailParam.midCategoryName}
+        </if>
+        <if test="detailParam.smallCategoryName != null">
+            AND gi.smallCategoryName = #{detailParam.smallCategoryName}
+        </if>
+    </select>
+
+    <select id="getValidReCalcTask" resultType="cn.nome.saas.allocation.repository.old.allocation.entity.RecalcTaskDo">
+        SELECT id,shop_id shopId,task_id taskId,task_percent percent,task_status status,operator
+        FROM issue_recale_task_new WHERE task_id = #{taskId} AND task_status = 0 AND TO_DAYS(created_at) = TO_DAYS(NOW()) ORDER BY id ASC LIMIT 1
+    </select>
+
+    <select id="hasDoingReCalcTask" resultType="cn.nome.saas.allocation.repository.old.allocation.entity.RecalcTaskDo">
+        SELECT id,shop_id shopId,task_id taskId,task_percent percent,task_status status,operator
+        FROM issue_recale_task_new WHERE task_id = #{taskId} AND task_status = 2 AND TO_DAYS(created_at) = TO_DAYS(NOW()) LIMIT 1
+    </select>
+
+    <update id="updateReCalcStatus">
+        update issue_recale_task_new
+        <set>
+            task_status = 2,task_percent = 1
+        </set>
+        WHERE id = #{recalcId} AND task_status = 0 AND TO_DAYS(created_at) = TO_DAYS(NOW())
+    </update>
+
+    <select id="shopReCalcCount" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM issue_recale_task_new
+        WHERE task_id = #{taskId} AND shop_id = #{shopId} AND task_status IN  (0,2) AND TO_DAYS(created_at) = TO_DAYS(NOW())
+    </select>
+
+    <select id="hasReCalcTask" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM issue_recale_task_new WHERE task_id = #{taskId} AND task_status IN (0,2) AND TO_DAYS(created_at) = TO_DAYS(NOW())
+    </select>
+
+    <insert id="addReCalcTask" useGeneratedKeys="true" keyColumn="id" keyProperty="taskDo.id" parameterType="cn.nome.saas.allocation.repository.old.allocation.entity.RecalcTaskDo">
+        insert into issue_recale_task_new(name,shop_id ,task_id ,task_percent ,task_status, run_time, operator) values
+        (#{taskDo.name},#{taskDo.shopId},#{taskDo.taskId},#{taskDo.percent},#{taskDo.status},#{taskDo.runTime},#{taskDo.operator})
+    </insert>
+
+    <update id="updateReCalcStatusFin">
+        update issue_recale_task_new
+        <set>
+            task_status = 1,updated_at = now()
+        </set>
+        WHERE id = #{recalcId}
+    </update>
+
+    <select id="getReCalcTaskById" resultType="cn.nome.saas.allocation.repository.old.allocation.entity.RecalcTaskDo">
+        SELECT id,shop_id shopId,task_id taskId,task_percent percent,task_status status,operator
+        FROM issue_recale_task_new WHERE id = #{recalcId}
+    </select>
+
+    <select id="getReCalcTaskListById" resultType="cn.nome.saas.allocation.repository.old.allocation.entity.RecalcTaskDo">
+        SELECT id,shop_id shopId,task_id taskId,task_percent percent,task_status status,operator
+        FROM issue_recale_task_new WHERE id IN
+        <foreach collection="recalcIds" item="item" index="index"
+                 open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
+    <update id="reCalcTaskCancel">
+        update issue_recale_task_new
+        <set>
+            task_status = 3,updated_at = now()
+        </set>
+        WHERE id = #{recalcId}
+    </update>
+
+    <update id="updateReCalcTaskPercent">
+        update issue_recale_task_new
+        <set>
+            task_percent = #{percentNum}
+        </set>
+        WHERE id = #{recalcId}
+    </update>
+
+    <insert id="batchInsertWarehouseShop" parameterType="java.util.List" >
+        insert into sub_warehouse_shop_mapping
+        (priority, warehouse_code, shop_id, created_at)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.priority}, #{item.warehouseCode}, #{item.shopId}, now())
+        </foreach>
+
+    </insert>
+
+    <insert id="addNewIssueSandboxDetail" parameterType="java.util.List">
+        insert into new_issue_sandbox_detail (
+        task_id, shop_id, shop_code, shop_name, issue_date, mat_code, size_name, issue_num) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskId},#{item.shopId},#{item.shopCode},#{item.shopName},#{item.issueDate},#{item.matCode},#{item.sizeName},#{item.issueNum})
+        </foreach>
+    </insert>
+
+    <insert id="addIssueSandboxDetail" parameterType="java.util.List">
+        insert into issue_sandbox_detail (
+        task_id, shop_id, shop_code, shop_name, issue_date, issue_num, issue_value) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskId},#{item.shopId},#{item.shopCode},#{item.shopName},#{item.issueDate},#{item.issueNum},#{item.issueValue})
+        </foreach>
+    </insert>
+
+    <select id="getIssueSandBoxDetail" resultType="cn.nome.saas.allocation.model.issue.IssueSandboxDetailDo">
+        select
+          shop_id shopId, shop_code shopCode, shop_name shopName, issue_date issueDate, issue_num issueNum, issue_value issueValue
+        from
+          issue_sandbox_detail
+        where task_id = #{taskId}
+    </select>
+
+    <select id="getHuihuoGoods" resultType="cn.nome.saas.allocation.model.issue.HuihuoGoodsDo">
+         select mat_code matCode, size_name sizeName, warehouse_code warehouseCode, huihuo_day huihuoDay, huihuo_qty huihuoQty from issue_sandbox_huihuo;
+    </select>
+
+    <insert id="addIssueReserveDetail" parameterType="java.util.List">
+        insert into  issue_reserve_detail (
+        shop_id, mat_code, size_name, issue_reserve_num) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.shopId},#{item.matCode},#{item.sizeName},
+            #{item.issueReserveNum})
+        </foreach>
+    </insert>
+
+    <select id="getIssueReserveDetail" resultType="cn.nome.saas.allocation.model.issue.IssueReserveDetailDo">
+        select
+        shop_id shopId, mat_code matCode, size_name sizeName, issue_reserve_num issueReserveNum
+        from
+        issue_reserve_detail
+        where
+        1=1
+        <if test="shopIds != null">
+            <foreach item="item" index="index" collection="shopIds" open="and shop_id in (" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <insert id="addIssueSandboxShopStock" parameterType="java.util.List">
+        insert into issue_sandbox_shop_stock (
+        task_id, shop_id, shop_code, shop_name, sandbox_date, stock, stock_value) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskId},#{item.shopId},#{item.shopCode},#{item.shopName},#{item.sandboxDate},#{item.stock},#{item.stockValue})
+        </foreach>
+    </insert>
+
+    <select id="getIssueSandboxShopStock" resultType="cn.nome.saas.allocation.model.issue.IssueSandboxShopStockDo">
+        select
+          shop_id shopId, shop_code shopCode, shop_name shopName, sandbox_date sandboxDate, stock stock, stock_value stockValue
+        from
+          issue_sandbox_shop_stock
+        where task_id = #{taskId}
+    </select>
+
+</mapper>

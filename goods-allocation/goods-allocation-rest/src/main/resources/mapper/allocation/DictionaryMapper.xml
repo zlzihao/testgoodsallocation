@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.DictionaryDOMapper" >
+
+    <select id="getDictionaryList" resultType="cn.nome.saas.allocation.repository.entity.allocation.DictionaryDO">
+        <![CDATA[
+			SELECT type,para_key as paraKey,para_value as paraValue from dictionary
+	  ]]>
+    </select>
+
+    <select id="getDictionaryByType" resultType="cn.nome.saas.allocation.repository.entity.allocation.DictionaryDO">
+        <![CDATA[
+			SELECT type,para_key as paraKey,para_value as paraValue from dictionary WHERE type = #{type}
+	  ]]>
+    </select>
+
+</mapper>

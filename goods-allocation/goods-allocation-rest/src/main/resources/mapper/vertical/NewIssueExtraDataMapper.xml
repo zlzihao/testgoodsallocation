@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.vertical.NewIssueExtraDataMapper" >
+
+
+    <select id="getIssueOutStockList" resultType="cn.nome.saas.allocation.model.issue.NewIssueOutStockDo">
+        select
+          dssd1.warehouseCode, dssd1.matCode, sum(dssd1.stockQty) stockQty, dbms.sizeName
+        from
+          (select
+            dssd.stockID warehouseCode, dssd.MatCode matCode, dssd.SizeID sizeId,sum(dssd.CanUseQty) stockQty
+          from
+            dws.dws_stok_sku_d dssd
+          where
+            dssd.stockID = #{stockId}
+            and dssd.OperationDate= date(now())-1
+          group by
+            stockID, MatCode, SizeID having sum(CanUseQty)>0) dssd1
+        left join
+          (SELECT
+            SizeID, SizeName
+          from
+            dwd.dwd_base_mat_size where EtlDate = CURRENT_DATE - 1) dbms
+        on
+          dssd1.SizeID = dbms.SizeID
+        group by
+          dssd1.warehouseCode, dssd1.matCode, dbms.sizeName
+    </select>
+
+    <select id="getIssueInStockList" resultType="cn.nome.saas.allocation.model.issue.NewIssueInStockDo">
+
+        select categoryName,midCategoryName,categoryCode,ShopID,MatCode,
+        sum(avgSaleQty) avgSaleQty, sum(stockQty) stockQty, sum(pathStockQty) pathStockQty, sizeName,
+        sum(moveQty) moveQty,quotePrice, yearNo,seasonName,
+        isEliminate, sum(saleQty28) saleQty28, sum(saleQty7) saleQty7
+        from
+        (
+
+        select
+            ddg.categoryName, ddg.midCategoryName, ddg.CategoryCode categoryCode,aes.ShopID shopId,aes.MatCode matCode,aes.SizeID sizeId,
+            (case
+                when(aes.AvgSaleQty is not null) then avgSaleQty
+                when(dlsf.firstInShopDate is not null) then 0
+                when(warehouseQty.stockQty is null) then 0
+            else
+                midAvg.midAvgQty end) avgSaleQty,
+            dssd.StockQty stockQty,dssd.PathStockQty pathStockQty,nvl(dssd.SizeName,dd.SizeName) sizeName,
+            dsd.MoveQty moveQty,ddg.QuotePrice quotePrice, ddg.YearNo yearNo, ddg.SeasonName seasonName,
+            (case when(ddg.MatTypeName = '淘汰') then 1 else 0 end) isEliminate, s28.saleQty28, s7.saleQty7,
+            dlsf.firstInShopDate
+        from
+            (select
+                sms.matcode,sms.sizeId,sms.shopID,aeas.AvgSaleQty
+            from
+                (select
+                    dgms.matcode,dgms.sizeId,dds.shopID
+                from dwd.dwd_goods_material_size dgms,dws.dws_dim_shop dds) sms
+            left join
+                (select
+                    matcode,sizeId,shopID,AvgSaleQty
+                from
+                    aps.aps_effect_28daily_saleqty where updatetime=date(now())-1) aeas
+            on
+                sms.matcode = aeas.matcode and sms.sizeId = aeas.sizeId and sms.shopID = aeas.shopID
+            ) aes
+        left join
+            dws.dws_stok_sku_d dssd
+        on
+            aes.ShopID= dssd.ShopID and dssd.OperationDate= date(now())-1 and aes.MatCode=dssd.MatCode and aes.SizeID=dssd.SizeID
+        left join
+            dws.dws_saleStockMove_d dsd
+        on
+            aes.ShopID=dsd.ShopID and date(dsd.billdate)= date(now())-1 and aes.MatCode=dsd.MatCode and aes.SizeID=dsd.SizeID
+        left join
+            dws.dws_dim_goods ddg
+        on
+            aes.Matcode = ddg.Matcode
+        left join
+            (select
+                a.matcode,a.sizeid,b.sizename
+            from
+                dwd.dwd_goods_material_size a
+            left join
+                dwd.dwd_base_mat_size b
+            on
+                a.sizeid=b.sizeid and b.etldate=date(now())-1
+            ) dd
+        on
+            aes.MatCode=dd.MatCode and aes.SizeID=dd.SizeID
+        left join
+            (select
+                shopid,MatCode,SizeID,sum(saleQty) SaleQty28
+            from
+                dws.dws_sale_sku_d
+            where
+                operationdate BETWEEN date(now())-28 AND date(now())-1 GROUP BY shopid,MatCode,SizeId
+            ) s28
+        on
+            aes.ShopID=s28.ShopID and aes.MatCode = s28.MatCode and aes.SizeID=s28.SizeID
+        left join
+            (select
+                shopid,MatCode,SizeID,sum(saleQty) SaleQty7
+            from
+                dws.dws_sale_sku_d
+            where
+                operationdate BETWEEN date(now())-7 AND date(now())-1 GROUP BY shopid,MatCode,SizeId) s7
+        on
+            aes.ShopID = s7.ShopID and aes.MatCode = s7.MatCode and aes.SizeID = s7.SizeID
+        left join
+            (select
+                aes.shopid,ddg.categoryName,ddg.midCategoryName,avg(aes.AvgSaleQty) midAvgQty
+            from
+                aps.aps_effect_28daily_saleqty aes
+            left join
+                dws.dws_dim_goods ddg
+            on
+                aes.Matcode = ddg.Matcode
+            where
+                aes.updatetime=date(now())-1
+            group by
+                aes.shopid,ddg.categoryName,ddg.midCategoryName) midAvg
+        on
+            ddg.categoryName = midAvg.categoryName and ddg.midCategoryName = midAvg.midCategoryName and aes.ShopID = midAvg.ShopID
+        left join
+            dws.dws_label_sku_firstInShopDate dlsf
+        on
+            aes.ShopID = dlsf.ShopID and aes.MatCode = dlsf.MatCode and aes.SizeID = dlsf.SizeID
+            <if test="shopIds != null">
+                <foreach collection="shopIds" open="and dlsf.shopid in ("  close=")" separator="," item="shopId">
+                    #{shopId}
+                </foreach>
+            </if>
+        left join
+            (select
+                stockID warehouseCode, MatCode matCode, SizeID sizeId,sum(CanUseQty) stockQty
+            from
+                dws.dws_stok_sku_d
+            where
+                stockID = 'NM001275' and OperationDate= date(now())-1
+            group by
+                stockID, MatCode, SizeID having sum(CanUseQty)<![CDATA[>]]>0) warehouseQty
+        on
+            aes.MatCode = warehouseQty.MatCode and aes.SizeID = warehouseQty.SizeID
+        where
+            1=1
+        <if test="type == 1 ">
+            and ddg.Categorycode in ('W','M')
+        </if>
+        <if test="type == 2 ">
+            and ddg.Categorycode not in ('W','M')
+        </if>
+        <if test="shopIds != null">
+            <foreach collection="shopIds" open="and aes.shopid in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+
+        ) a
+        group by
+          categoryName,midCategoryName,categoryCode,ShopID,MatCode,sizeName,quotePrice, yearNo,  seasonName,isEliminate
+    </select>
+
+    <select id="getIssueInStockListSandBox" resultType="cn.nome.saas.allocation.model.issue.NewIssueInStockDo">
+
+        select <!--categoryName,midCategoryName,categoryCode,-->ShopID,MatCode,
+        sum(avgSaleQty) avgSaleQty, sum(stockQty) + sum(pathStockQty) + sum(moveQty) totalStockQty, sizeName
+        <!--,quotePrice, yearNo,seasonName,
+        isEliminate, sum(saleQty28) saleQty28, sum(saleQty7) saleQty7-->
+        from
+        (
+
+        select
+        ddg.categoryName, ddg.midCategoryName, ddg.CategoryCode categoryCode,aes.ShopID shopId,aes.MatCode matCode,aes.SizeID sizeId,
+        (case
+        when(aes.AvgSaleQty is not null) then avgSaleQty
+        when(dlsf.firstInShopDate is not null) then 0
+        when(warehouseQty.stockQty is null) then 0
+        else
+        midAvg.midAvgQty end) avgSaleQty,
+        dssd.StockQty stockQty,dssd.PathStockQty pathStockQty,nvl(dssd.SizeName,dd.SizeName) sizeName,
+        dsd.MoveQty moveQty,ddg.QuotePrice quotePrice, ddg.YearNo yearNo, ddg.SeasonName seasonName,
+        (case when(ddg.MatTypeName = '淘汰') then 1 else 0 end) isEliminate, s28.saleQty28, s7.saleQty7,
+        dlsf.firstInShopDate
+        from
+        (select
+        sms.matcode,sms.sizeId,sms.shopID,aeas.AvgSaleQty
+        from
+        (select
+        dgms.matcode,dgms.sizeId,dds.shopID
+        from dwd.dwd_goods_material_size dgms,dws.dws_dim_shop dds) sms
+        left join
+        (select
+        matcode,sizeId,shopID,AvgSaleQty
+        from
+        aps.aps_effect_28daily_saleqty where updatetime=date(now())-1) aeas
+        on
+        sms.matcode = aeas.matcode and sms.sizeId = aeas.sizeId and sms.shopID = aeas.shopID
+        ) aes
+        left join
+        dws.dws_stok_sku_d dssd
+        on
+        aes.ShopID= dssd.ShopID and dssd.OperationDate= date(now())-1 and aes.MatCode=dssd.MatCode and aes.SizeID=dssd.SizeID
+        left join
+        dws.dws_saleStockMove_d dsd
+        on
+        aes.ShopID=dsd.ShopID and date(dsd.billdate)= date(now())-1 and aes.MatCode=dsd.MatCode and aes.SizeID=dsd.SizeID
+        left join
+        dws.dws_dim_goods ddg
+        on
+        aes.Matcode = ddg.Matcode
+        left join
+        (select
+        a.matcode,a.sizeid,b.sizename
+        from
+        dwd.dwd_goods_material_size a
+        left join
+        dwd.dwd_base_mat_size b
+        on
+        a.sizeid=b.sizeid and b.etldate=date(now())-1
+        ) dd
+        on
+        aes.MatCode=dd.MatCode and aes.SizeID=dd.SizeID
+        left join
+        (select
+        shopid,MatCode,SizeID,sum(saleQty) SaleQty28
+        from
+        dws.dws_sale_sku_d
+        where
+        operationdate BETWEEN date(now())-28 AND date(now())-1 GROUP BY shopid,MatCode,SizeId
+        ) s28
+        on
+        aes.ShopID=s28.ShopID and aes.MatCode = s28.MatCode and aes.SizeID=s28.SizeID
+        left join
+        (select
+        shopid,MatCode,SizeID,sum(saleQty) SaleQty7
+        from
+        dws.dws_sale_sku_d
+        where
+        operationdate BETWEEN date(now())-7 AND date(now())-1 GROUP BY shopid,MatCode,SizeId) s7
+        on
+        aes.ShopID = s7.ShopID and aes.MatCode = s7.MatCode and aes.SizeID = s7.SizeID
+        left join
+        (select
+        aes.shopid,ddg.categoryName,ddg.midCategoryName,avg(aes.AvgSaleQty) midAvgQty
+        from
+        aps.aps_effect_28daily_saleqty aes
+        left join
+        dws.dws_dim_goods ddg
+        on
+        aes.Matcode = ddg.Matcode
+        where
+        aes.updatetime=date(now())-1
+        group by
+        aes.shopid,ddg.categoryName,ddg.midCategoryName) midAvg
+        on
+        ddg.categoryName = midAvg.categoryName and ddg.midCategoryName = midAvg.midCategoryName and aes.ShopID = midAvg.ShopID
+        left join
+        dws.dws_label_sku_firstInShopDate dlsf
+        on
+        aes.ShopID = dlsf.ShopID and aes.MatCode = dlsf.MatCode and aes.SizeID = dlsf.SizeID
+        <if test="shopIds != null">
+            <foreach collection="shopIds" open="and dlsf.shopid in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+        left join
+        (select
+        stockID warehouseCode, MatCode matCode, SizeID sizeId,sum(CanUseQty) stockQty
+        from
+        dws.dws_stok_sku_d
+        where
+        stockID = 'NM001275' and OperationDate= date(now())-1
+        group by
+        stockID, MatCode, SizeID having sum(CanUseQty)<![CDATA[>]]>0) warehouseQty
+        on
+        aes.MatCode = warehouseQty.MatCode and aes.SizeID = warehouseQty.SizeID
+        where
+        1=1
+        <if test="type == 1 ">
+            and ddg.Categorycode in ('W','M')
+        </if>
+        <if test="type == 2 ">
+            and ddg.Categorycode not in ('W','M')
+        </if>
+        <if test="shopIds != null">
+            <foreach collection="shopIds" open="and aes.shopid in ("  close=")" separator="," item="shopId">
+                #{shopId}
+            </foreach>
+        </if>
+
+        ) a
+        where a.isEliminate = 0
+        group by
+        categoryName,midCategoryName,categoryCode,ShopID,MatCode,sizeName,quotePrice, yearNo,  seasonName,isEliminate
+    </select>
+
+    <select id="getNewSkcList" resultType="cn.nome.saas.allocation.model.issue.NewIssueInStockDo">
+        <![CDATA[
+            select a.*,c.CategoryCode,c.MidCategoryCode,d.SizeName, c.QuotePrice, c.YearNo, c.SeasonName, dssm.MoveQty  from(
+                select b.ShopID,a.Matcode,a.SizeId from(
+                    select a.Matcode,b.SizeId,b.StockQty from(
+                        select MatCode from (
+                            select g.MatCode,
+                            max(case when isnull(g.Prosaledate,'1900-01-01')>isnull(d.firstInStockDate,'1900-01-01')
+                            then isnull(g.Prosaledate,'1900-01-01') else isnull(d.firstInStockDate,'1900-01-01') end) as max_date
+                            from dws.dws_dim_goods g
+                            left join dws.dws_label_sku_firstInStockDate d on g.matcode = d.matcode
+                            where g.Categorycode not in ('W','M')
+                            group by g.MatCode
+                        )a where max_date between date(now())-60 and date(now())
+                        union(
+                            select MatCode from(
+                                select d.MatCode,d.SizeID,round(sum(d.SaleAmt)/28,2) AvgSaleAmt,round(sum(d.SaleQty)/28,2) AvgSaleQty
+                                from dws.dws_sale_sku_d d,dws.dws_dim_goods g
+                                where d.OperationDate>=date(now())-28 and g.MatCode = d.MatCode
+                                and g.CategoryCode not in ('W','M')
+                                group by d.MatCode,d.SizeID
+                            ) a order by AvgSaleQty desc limit 300
+                        )
+                    ) a left join (
+                         select MatCode, SizeID,sum(StockQty) StockQty
+                         from dws.dws_stok_sku_d
+                         where stockID in('NM000353','NM000001','NM001275') and OperationDate= date(now())-1
+                         group by MatCode, SizeID having sum(StockQty)>0
+                    ) b on a.Matcode=b.Matcode where b.SizeId is not null
+                )a ,  (select distinct(shopid) as shopId from dws.dws_stock_shop_d where OperationDate= date(now())-1)b
+            ) a
+            left join dws.dws_stok_sku_d b on a.shopid=b.shopid and a.matcode=b.matcode and a.sizeid=b.sizeid and b.OperationDate= date(now())-1
+            left join dws.dws_dim_goods c on a.matcode= c.matcode
+            left join dwd.dwd_base_mat_size d on a.sizeid= d.sizeid and d.etldate=date(now())-1
+            left join dws.dws_saleStockMove_d dssm on a.ShopID=dssm.ShopID and date(dssm.billdate)= date(now())-1 and a.MatCode=dssm.MatCode and a.SizeID=dssm.SizeID
+            where b.stockqty is null and a.shopid is not null
+            and c.Categorycode not in ('W','M')
+            and not exists (
+                    select 1 from aps.aps_effect_28daily_saleqty sale
+                    where sale.updatetime=date(now())-1 and sale.AvgSaleQty >=0
+                    and sale.ShopID = a.ShopID and sale.MatCode=a.MatCode and sale.SizeID=a.SizeID
+            )
+            ]]>
+
+            <if test="shopIds != null">
+                <foreach collection="shopIds" open="and a.shopid in ("  close=")" separator="," item="shopId">
+                    #{shopId}
+                </foreach>
+            </if>
+
+    </select>
+
+    <select id="getIssueSalePredict" resultType="cn.nome.saas.allocation.repository.entity.vertical.MidSalePredictDO">
+		select shopid, avg(weight) avgSalePredict from mid.mid_predict_sale_shop_weight
+		where operationdate between CURRENT_DATE and #{endDate}
+		and predict_date = CURRENT_DATE
+		and base = CURRENT_DATE
+		group by shopid
+	</select>
+
+    <select id="getDataStockStatus" resultType="java.lang.Integer">
+		select count(*) from aps.aps_etlend_message where etldt=date(now())-1
+	</select>
+
+</mapper>

@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.NewIssueSkuCalcDOMapper" >
+
+    <sql id="Child_Column_List" >
+        shop_id,(case when(category_name = '儿童') then '家居' else category_name end) as category_name,mid_category_name,avg_sale_qty
+    </sql>
+
+    <sql id="No_Child_Column_List" >
+        shop_id,category_name,mid_category_name,avg_sale_qty
+    </sql>
+
+    <select id="getPriorityCount" resultType="cn.nome.saas.allocation.model.allocation.Paramater">
+        select priority as 'key',count(id) as 'value' from sub_warehouse_config
+        group by priority
+        order by priority asc
+    </select>
+
+    <update id="updateWarehouseStatus">
+        update sub_warehouse_status_record set status = #{status} where id = #{id}
+    </update>
+
+    <select id="getWarehoseConfigIdByPriority" resultType="cn.nome.saas.allocation.repository.entity.allocation.WarehouseRecordDO">
+        select record.id as id ,record.task_id as taskId,record.config_id as configId
+        from sub_warehouse_status_record record,sub_warehouse_config config
+        where record.status = 2 and config.priority = #{priority}
+        and record.config_id = config.id and config.is_head = 0
+    </select>
+
+    <update id="updateTableStatus">
+        update ${tableName} set status = #{status} where shop_id = #{shopId} and status = #{oldStatus}
+    </update>
+
+    <select id="getMidCategoryAvgQty" resultType="cn.nome.saas.allocation.repository.entity.allocation.MidCategoryStockDO">
+
+        select a.shop_id as shopID,a.category_name as categoryName,a.mid_category_name as midCategoryName,sum(a.avg_sale_qty) as avgSaleQty
+        FROM (
+            SELECT
+                <if test="childFlag == 0">
+                    <include refid="No_Child_Column_List" />
+                </if>
+                <if test="childFlag == 1">
+                    <include refid="Child_Column_List" />
+                </if>
+            FROM ${tableName}
+                WHERE status = 0
+                <if test="shopIds != null and shopIds.size > 0">
+                    AND shop_id IN
+                    <foreach collection="shopIds" item="shopId" index="index" open="(" close=")" separator=",">
+                        #{shopId}
+                    </foreach>
+                </if>
+        ) a
+        group by a.shop_id,a.category_name,a.mid_category_name
+        order by a.shop_id,a.category_name,a.mid_category_name
+    </select>
+
+    <select id="getCategoryDisplayData" resultType="cn.nome.saas.allocation.repository.entity.allocation.MidCategoryStockDO">
+          select a.shopid as shopID,a.CategoryName as categoryName,a.MidCategoryName as midCategoryName,a.display_qty as displayQty,
+                 a.DisplayPercent as displayPercent,b.DisplayDepth as displayDepth,a.Display_Qty*b.DisplayDepth as displayQtyA,
+                 a.Display_Qty*b.DisplayDepth*a.DisplayPercent as displayQtyB,c.IssueDay as issueDay,c.SafeDay as safeDay
+          from shop_display_design_v a
+          LEFT JOIN display_v b on a.MidCategoryName = b.MidCategoryName and a.CategoryName = b.CategoryName
+          LEFT JOIN shop_info c on a.ShopID=c.ShopId
+          where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            AND a.shopid IN
+            <foreach collection="shopIds" item="shopId" index="index" open="(" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="checkTableExists" parameterType="java.lang.String" resultType="java.lang.Integer" >
+        select count(*) from information_schema.TABLES where table_name = #{tableName}
+    </select>
+
+    <!-- new_issue_mid_category_qty_${taskId}_${yyyyMMdd} -->
+    <select id="geMidCategoryQty" resultType="cn.nome.saas.allocation.repository.entity.allocation.MidCategoryStockDO">
+        select shop_id as shopID,category_name as categoryName,mid_category_name as midCategoryName,
+        mid_avg_sale_qty as avgSaleQty,display_qty as displayQty ,mid_need_qty as needQty
+        from ${tableName} where 1 = 1 and status = 0
+        <if test="shopIdList != null and shopIdList.size > 0">
+            AND shop_id IN
+            <foreach collection="shopIdList" item="shopId" index="index" open="(" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- new_issue_in_stock_${taskId}_${yyyyMMdd} -->
+    <select id="getSkuStockQty" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueNeedStockDO">
+        select
+        shop_id as shopID,
+        <if test="childFlag == 0">
+            category_name as categoryName,
+        </if>
+        <if test="childFlag == 1">
+            (case when(category_name = '儿童') then '家居' else category_name end) as categoryName,
+        </if>
+        mid_category_name as midCategoryName,size_id as sizeId,size_name as sizeName,mat_code as matCode,
+        avg_sale_qty as avgSaleQty,security_qty as minQty,total_stock_qty as totalStockQty
+        from ${tableName}
+        where status = 0 AND is_prohibited = 0
+        AND shop_id = #{shopId}
+        AND mat_code IN
+        <foreach collection="matCodeList" item="matCode" index="index" open="(" close=")" separator=",">
+            #{matCode}
+        </foreach>
+    </select>
+
+    <update id="createMidCategoryTable" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+          `shop_id` varchar(32)  DEFAULT '' COMMENT '门店ID',
+          `category_name` varchar(16)  DEFAULT '' COMMENT '大类名称',
+          `mid_category_name` varchar(16)  DEFAULT '' COMMENT '中类名称',
+          `mid_avg_sale_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '中类日均销',
+          `display_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '陈列数量',
+          `mid_need_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '中类需求量',
+          `status` tinyint(2) DEFAULT '0' COMMENT '数据状态，0有效、2重算中',
+          `created_at` timestamp NULL DEFAULT NULL,
+          PRIMARY KEY (`id`),
+          KEY `index_CategoryName` (`category_name`) USING BTREE,
+          KEY `index_MidCategoryName` (`mid_category_name`) USING BTREE,
+          KEY `idx_ShopID` (`shop_id`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <update id="createIssueNeedStockTable" parameterType="java.lang.String">
+        CREATE TABLE ${tableName} (
+          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+          `shop_id` varchar(32)  DEFAULT '' COMMENT '门店ID',
+          `category_name` varchar(32)  DEFAULT '' COMMENT '大类名',
+          `mid_category_name` varchar(32)  DEFAULT '' COMMENT '中类名',
+          `small_category_name` varchar(32)  DEFAULT '' COMMENT '小类名',
+          `mat_code` varchar(64)  DEFAULT '' COMMENT '商品编码',
+          `size_id` varchar(64)  DEFAULT '' COMMENT '尺码ID',
+          `size_name` varchar(16)  DEFAULT '' COMMENT '尺码名称',
+          `total_sale_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '总日均销',
+          `mid_need_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '中类需求量',
+          `percent_category` decimal(19,4) DEFAULT '0.00' COMMENT '中类占比',
+          `actual_need_stock_qty` DECIMAL(19,4) DEFAULT '0' COMMENT 'SKU实际需求量',
+          `need_stock_qty1` DECIMAL(19,4) DEFAULT '0' COMMENT '单sku需求量1   ',
+          `need_stock_qty2` DECIMAL(19,4) DEFAULT '0' COMMENT '单sku需求量2   ',
+          `need_stock_qty3` DECIMAL(19,4) DEFAULT '0' COMMENT '单sku需求量3',
+          `total_stock_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '门店总库存',
+          `remain_need_qty` DECIMAL(19,4) DEFAULT '0' COMMENT '剩余需求数量',
+          `status` tinyint(2) DEFAULT '0' COMMENT '数据状态，0有效、2重算中',
+          `created_at` timestamp NULL DEFAULT NULL COMMENT '创建时间',
+          PRIMARY KEY (`id`),
+          INDEX `idx_com`(`size_name`,`mat_code`,`shop_id`) USING BTREE,
+          INDEX `idx_shopid`(`shop_id`) USING BTREE
+        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+    </update>
+
+    <insert id="insertMidCategoryQty">
+        insert into ${tableName}(shop_id,category_name,mid_category_name,mid_avg_sale_qty,display_qty,mid_need_qty,status,created_at) VALUES
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (#{item.shopID},#{item.categoryName},#{item.midCategoryName},#{item.avgSaleQty},#{item.displayQty},#{item.needQty},0,now())
+        </foreach>
+    </insert>
+
+    <insert id="bakMidCategoryQty">
+        insert into ${bakTabName}
+        (shop_id,category_name,mid_category_name,mid_avg_sale_qty,display_qty,mid_need_qty,status,created_at)
+        select
+        shop_id,category_name,mid_category_name,mid_avg_sale_qty,display_qty,mid_need_qty,status,created_at
+        from ${tabName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="and shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delMidCategoryQtyByShopId">
+        delete from  ${tableName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+    <insert id="insertNeedSkuStock">
+        insert into ${tableName}
+        (shop_id,mat_code,size_id,size_name,total_sale_qty,mid_need_qty,percent_category,need_stock_qty1,need_stock_qty2,need_stock_qty3,category_name,mid_category_name,small_category_name,total_stock_qty,actual_need_stock_qty,remain_need_qty,created_at)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.shopId},#{item.matCode},#{item.sizeId},#{item.sizeName},#{item.totalSaleQty},#{item.needQty},#{item.percentCategory},#{item.needStockQty1},#{item.needStockQty2},#{item.needStockQty3},#{item.categoryName},#{item.midCategoryName},#{item.smallCategoryName},#{item.totalStockQty},#{item.needStockQty},#{item.needStockQty},now())
+        </foreach>
+
+    </insert>
+
+    <update id="loadFileNeedStock">
+        load data local infile #{fullFileName} into table ${needTabName}
+        CHARACTER SET utf8
+        FIELDS TERMINATED BY '||'
+            OPTIONALLY ENCLOSED BY ''
+            ESCAPED BY '\\'
+        LINES TERMINATED BY '\n'
+        (shop_id, mat_code, size_id, size_name, category_name, mid_category_name, small_category_name, total_sale_qty, mid_need_qty,
+        percent_category, need_stock_qty1, need_stock_qty2, need_stock_qty3, total_stock_qty, actual_need_stock_qty, remain_need_qty)
+    </update>
+
+    <insert id="bakNeedStock">
+        insert into ${bakTabName}
+        (shop_id,mat_code,size_id,size_name,total_sale_qty,mid_need_qty,percent_category,need_stock_qty1,need_stock_qty2,need_stock_qty3,category_name,mid_category_name,total_stock_qty,actual_need_stock_qty,remain_need_qty,created_at)
+        select
+        shop_id,mat_code,size_id,size_name,total_sale_qty,mid_need_qty,percent_category,need_stock_qty1,need_stock_qty2,need_stock_qty3,category_name,mid_category_name,total_stock_qty,actual_need_stock_qty,remain_need_qty,created_at
+        from ${tabName}
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </insert>
+
+    <delete id="delNeedStockByShopId">
+        delete from  ${tabName} where 1 = 1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+    </delete>
+
+
+    <delete id="delete" parameterType="java.lang.String">
+        delete from  ${tableName}
+    </delete>
+
+    <delete id="deleteByShopId">
+        delete from  ${tableName} where 1 = 1
+        AND shop_id IN
+        <foreach collection="shopIdList" item="shopId" index="index" open="(" close=")" separator=",">
+            #{shopId}
+        </foreach>
+    </delete>
+
+
+    <select id="getSmallSumAvg" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueSumAvgDO">
+            select i.shop_id shopId, (case when(i.category_name = '儿童' AND s.HaveChild = 0) then '家居' else i.category_name end) as categoryName, i.mid_category_name midCategoryName, i.small_category_name smallCategoryName, sum(i.avg_sale_qty) sumAvg
+            from ${inTabName} i left join shop_info s
+            on i.shop_id = s.ShopID
+            where 1=1
+            <if test="shopIds != null and shopIds.size > 0">
+                <foreach collection="shopIds" item="shopId" index="index" open="AND i.shop_id IN (" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+            group by i.shop_id, i.category_name, i.mid_category_name, i.small_category_name
+    </select>
+    <select id="getMidSumAvg" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueSumAvgDO">
+            select i.shop_id shopId, (case when(i.category_name = '儿童' AND s.HaveChild = 0) then '家居' else i.category_name end) as categoryName, i.mid_category_name midCategoryName, sum(i.avg_sale_qty) sumAvg
+            from ${inTabName} i left join shop_info s
+            on i.shop_id = s.ShopID
+            where 1=1
+            <if test="shopIds != null and shopIds.size > 0">
+                <foreach collection="shopIds" item="shopId" index="index" open="AND i.shop_id IN (" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+        group by i.shop_id, i.category_name, i.mid_category_name
+    </select>
+    <select id="getBigSumAvg" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueSumAvgDO">
+            select i.shop_id shopId, (case when(i.category_name = '儿童' AND s.HaveChild = 0) then '家居' else i.category_name end) as categoryName, sum(i.avg_sale_qty) sumAvg
+            from ${inTabName} i left join shop_info s on i.shop_id = s.ShopID
+            where 1=1
+            <if test="shopIds != null and shopIds.size > 0">
+                <foreach collection="shopIds" item="shopId" index="index" open="AND i.shop_id IN (" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+        group by i.shop_id, i.category_name
+    </select>
+    <select id="getAllSumAvg" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueSumAvgDO">
+            select shop_id shopId, sum(avg_sale_qty) sumAvg from ${inTabName}
+            where 1=1
+            <if test="shopIds != null and shopIds.size > 0">
+                <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+        group by shop_id
+    </select>
+    <select id="getDistinctMatCode" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueSumAvgDO">
+        select mat_code matCode, size_name sizeName from  ${needTabName}
+        where 1=1
+            <if test="shopIds != null and shopIds.size > 0">
+                <foreach collection="shopIds" item="shopId" index="index" open="AND shop_id IN (" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+        group by mat_code, size_name
+    </select>
+
+    <select id="getIssueNeedStockList" resultType="cn.nome.saas.allocation.repository.entity.allocation.IssueNeedStockDO">
+        select
+            ins.id, ins.shop_id shopId, ins.category_name categoryName, ins.mid_category_name midCategoryName, ins.mat_code matCode, ins.size_id sizeId,
+            ins.size_name sizeName, ins.total_sale_qty totalSaleQty, ins.mid_need_qty midNeedQty, ins.percent_category percentCategory, ins.actual_need_stock_qty needStockQty,
+            ins.need_stock_qty1 needStockQty1, ins.need_stock_qty2 needStockQty2, ins.need_stock_qty3 needStockQty3, ins.total_stock_qty totalStockQty, ins.remain_need_qty remainNeedQty,
+            ins.status, ins.created_at createdAt,
+            (case when(si.ShopLevel = '-') then 'B' else si.ShopLevel end) ShopLevel, si.shopCode,
+            iis.avg_sale_qty avgSaleQty
+        from ${needTabName} ins
+        left join shop_info si on si.shopid = ins.shop_id
+        left join ${inTabName} iis on iis.shop_id = ins.shop_id and iis.mat_code = ins.mat_code and iis.size_name = ins.size_name
+        where 1=1
+        <if test="shopIds != null and shopIds.size > 0">
+            <foreach collection="shopIds" item="shopId" index="index" open="AND ins.shop_id IN (" close=")" separator=",">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="matCodes != null and matCodes.size > 0">
+            <foreach collection="matCodes" item="matCode" index="index" open="AND ins.mat_code IN (" close=")" separator=",">
+                #{matCode}
+            </foreach>
+        </if>
+        <if test="sizeNames != null and sizeNames.size > 0">
+            <foreach collection="sizeNames" item="sizeName" index="index" open="AND ins.size_name IN (" close=")" separator=",">
+                #{sizeName}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

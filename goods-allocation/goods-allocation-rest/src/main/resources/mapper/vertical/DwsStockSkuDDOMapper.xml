@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.allocation.repository.dao.vertical.DwsStockSkuDDOMapper" >
+
+  <resultMap id="BaseResultMap" type="cn.nome.saas.allocation.repository.entity.vertical.DwsStockSkuDDO" >
+      <result column="CompanyNo" property="companyNo"  />
+      <result column="ShopID" property="shopID"  />
+      <result column="StockID" property="stockID"  />
+      <result column="OperationDate" property="operationDate"  />
+      <result column="MatCode" property="matCode"  />
+      <result column="SizeID" property="sizeID"  />
+      <result column="SizeName" property="sizeName"  />
+      <result column="Color" property="color"  />
+      <result column="StockQty" property="stockQty"  />
+      <result column="StockAmt" property="stockAmt"  />
+      <result column="HCStockAmt" property="hcStockAmt"  />
+      <result column="PathStockQty" property="pathStockQty"  />
+      <result column="PathStockAmt" property="pathStockAmt"  />
+      <result column="HCPathStockAmt" property="hcPathStockAmt"  />
+      <result column="HCCurr" property="hcCurr"  />
+      <result column="LoadTime" property="loadTime"  />
+      <result column="CanUseQty" property="canUseQty"  />
+      <result column="Validdays" property="validdays"  />
+      <result column="ColorName" property="colorName"  />
+
+  </resultMap>
+
+
+    <select id="selectByParam" resultMap="BaseResultMap" >
+        SELECT * FROM dws.dws_stok_sku_d where OperationDate = CURRENT_DATE - 1 and ShopID = #{ShopId} and MatCode = #{MatCode} and SizeName = #{SizeName};
+  </select>
+
+
+</mapper>

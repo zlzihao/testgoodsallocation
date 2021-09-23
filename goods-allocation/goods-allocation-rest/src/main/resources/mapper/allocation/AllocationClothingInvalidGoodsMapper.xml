@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.allocation.repository.dao.allocation.AllocationClothingInvalidGoodsMapper" >
+
+    <resultMap id="ResultMap" type="cn.nome.saas.allocation.repository.entity.allocation.AllocationClothingInvalidGoods" >
+        <result column="task_id" property="taskId"  />
+        <result column="shop_id" property="shopId"  />
+        <result column="shop_name" property="shopName"  />
+        <result column="mat_code" property="matCode"  />
+        <result column="mat_name" property="matName"  />
+        <result column="size_id" property="sizeId"  />
+        <result column="avg_sale_qty" property="avgSaleQty"  />
+        <result column="apply_stock_qty" property="applyStockQty"  />
+        <result column="stock_qty" property="stockQty"  />
+        <result column="path_stock_qty" property="pathStockQty"  />
+    </resultMap>
+
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id" parameterType="java.util.List" >
+        insert into allocation_clothing_invalid_goods
+        (
+          task_id,shop_id,shop_name,mat_code,mat_name,size_id,avg_sale_qty,stock_qty,path_stock_qty,apply_stock_qty,sale_days,created_at,allocation_type
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.taskId},#{item.shopId},#{item.shopName},#{item.matCode},#{item.matName},
+            #{item.sizeId},#{item.avgSaleQty},#{item.applyStockQty},#{item.stockQty},
+            #{item.pathStockQty},#{item.saleDays},now(),#{item.allocationType}
+            )
+        </foreach>
+
+    </insert>
+
+    <insert id="batchInsertValidGoods" useGeneratedKeys="true" keyProperty="id" parameterType="java.util.List" >
+        insert into allocation_clothing_valid_goods
+        (
+        task_id,shop_id,shop_name,mat_code,mat_name,size_id,avg_sale_qty,stock_qty,path_stock_qty,apply_stock_qty,sale_days,created_at,allocation_type
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.taskId},#{item.shopId},#{item.shopName},#{item.matCode},#{item.matName},
+            #{item.sizeId},#{item.avgSaleQty},#{item.applyStockQty},#{item.stockQty},
+            #{item.pathStockQty},#{item.saleDays},now(),#{item.allocationType}
+            )
+        </foreach>
+
+    </insert>
+
+    <delete id="deleteValidGoodsByParam" parameterType="java.lang.Integer">
+        DELETE FROM allocation_clothing_valid_goods
+        where 1 = 1
+        <if test="taskId != null">
+            and task_id = #{taskId}
+        </if>
+        and allocation_type = #{type}
+    </delete>
+
+    <delete id="deleteByParam" parameterType="java.lang.Integer">
+        DELETE FROM allocation_clothing_invalid_goods
+        where 1 = 1
+        <if test="taskId != null">
+            and task_id = #{taskId}
+        </if>
+        and allocation_type = #{type}
+    </delete>
+
+    <select id="selectInvalidGoods" resultType="cn.nome.saas.allocation.repository.entity.allocation.AllocationClothingInvalidGoods">
+        select s.ShopName as shopName,a.mat_code as matCode,g.MatName as matName,a.size_id as sizeId,a.avg_sale_qty as avgSaleQty,
+        a.stock_qty as stockQty,a.path_stock_qty as pathStockQty,a.apply_stock_qty as applyStockQty,a.sale_days as saleDays,
+        t.min_display_qty as minDisplayQty
+        from allocation_clothing_invalid_goods a
+        left join  dws_dim_shop s on a.shop_id = s.ShopID
+        left join dws_dim_goods g on a.mat_code = g.MatCode
+        left join ${tableName} t on a.shop_id = t.shop_id and a.mat_code = t.mat_code and a.size_id = t.size_id
+        where task_id = #{taskId} and allocation_type = 2
+        <if test="shopId != null">
+            and a.shop_id = #{shopId}
+        </if>
+
+    </select>
+
+
+</mapper>
