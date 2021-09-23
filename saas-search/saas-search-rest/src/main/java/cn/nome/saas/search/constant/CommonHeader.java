@@ -1,0 +1,9 @@
+package cn.nome.saas.search.constant;
+
+public class CommonHeader {
+
+    public final static String corpId = "HEADER-NOME-CorpID";
+    public final static String appId = "HEADER-NOME-AppID";
+    public final static String uid = "HEADER-NOME-UID";
+
+}

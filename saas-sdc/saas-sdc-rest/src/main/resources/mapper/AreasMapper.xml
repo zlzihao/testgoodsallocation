@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.sdc.repository.dao.AreasMapper">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="cn.nome.saas.sdc.repository.entity.AreasDO" id="BaseResultMap">
+        <id property="id" column="id"/>
+        <result property="corpId" column="corp_id"/>
+        <result property="areaTypeId" column="area_type_id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="areaName" column="area_name"/>
+        <result property="areaCode" column="area_code"/>
+        <result property="areaCodeDescription" column="area_code_description"/>
+        <result property="locations" column="locations"/>
+        <result property="areaManager" column="area_manager"/>
+        <result property="areaManagerJobNumber" column="area_manager_job_number"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="lastUpdateUserId" column="last_update_user_id"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+		id, corp_id, area_type_id, parent_id, area_name, area_code, area_code_description, locations, area_manager, area_manager_job_number, created_at, updated_at, create_user_id, last_update_user_id, is_deleted
+	</sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from areas
+        where id = #{id}
+    </select>
+    <insert id="add" useGeneratedKeys="true" keyProperty="id"
+            parameterType="cn.nome.saas.sdc.repository.entity.AreasDO">
+        insert into areas
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="corpId != null">
+                corp_id,
+            </if>
+            <if test="areaTypeId != null">
+                area_type_id,
+            </if>
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="areaName != null">
+                area_name,
+            </if>
+            <if test="areaCode != null">
+                area_code,
+            </if>
+            <if test="areaCodeDescription != null">
+                area_code_description,
+            </if>
+            <if test="locations != null">
+                locations,
+            </if>
+            <if test="areaManager != null">
+                area_manager,
+            </if>
+            <if test="areaManagerJobNumber != null">
+                area_manager_job_number,
+            </if>
+            <if test="createdAt != null">
+                created_at,
+            </if>
+            <if test="updatedAt != null">
+                updated_at,
+            </if>
+            <if test="createUserId != null">
+                create_user_id,
+            </if>
+            <if test="lastUpdateUserId != null">
+                last_update_user_id,
+            </if>
+            <if test="isDeleted != null">
+                is_deleted,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id},
+            </if>
+            <if test="corpId != null">
+                #{corpId},
+            </if>
+            <if test="areaTypeId != null">
+                #{areaTypeId},
+            </if>
+            <if test="parentId != null">
+                #{parentId},
+            </if>
+            <if test="areaName != null">
+                #{areaName},
+            </if>
+            <if test="areaCode != null">
+                #{areaCode},
+            </if>
+            <if test="areaCodeDescription != null">
+                #{areaCodeDescription},
+            </if>
+            <if test="locations != null">
+                #{locations},
+            </if>
+            <if test="areaManager != null">
+                #{areaManager},
+            </if>
+            <if test="areaManagerJobNumber != null">
+                #{areaManagerJobNumber},
+            </if>
+            <if test="createdAt != null">
+                #{createdAt},
+            </if>
+            <if test="updatedAt != null">
+                #{updatedAt},
+            </if>
+            <if test="createUserId != null">
+                #{createUserId},
+            </if>
+            <if test="lastUpdateUserId != null">
+                #{lastUpdateUserId},
+            </if>
+            <if test="isDeleted != null">
+                #{isDeleted},
+            </if>
+        </trim>
+    </insert>
+    <update id="clear" parameterType="cn.nome.saas.sdc.repository.entity.AreasDO">
+		update areas set is_deleted=#{isDeleted} where area_type_id=#{areaTypeId} and corp_id=#{corpId}
+	</update>
+    <update id="update" parameterType="cn.nome.saas.sdc.repository.entity.AreasDO">
+        update areas
+        <set>
+            <if test="areaTypeId != null">
+                area_type_id = #{areaTypeId},
+            </if>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+            <if test="areaName != null">
+                area_name = #{areaName},
+            </if>
+            <if test="areaCode != null">
+                area_code = #{areaCode},
+            </if>
+            <if test="areaCodeDescription != null">
+                area_code_description = #{areaCodeDescription},
+            </if>
+            <if test="locations != null">
+                locations = #{locations},
+            </if>
+            <if test="areaManager != null">
+                area_manager = #{areaManager},
+            </if>
+            <if test="areaManagerJobNumber != null">
+                area_manager_job_number = #{areaManagerJobNumber},
+            </if>
+            <if test="createdAt != null">
+                created_at = #{createdAt},
+            </if>
+            <if test="updatedAt != null">
+                updated_at = #{updatedAt},
+            </if>
+            <if test="createUserId != null">
+                create_user_id = #{createUserId},
+            </if>
+            <if test="lastUpdateUserId != null">
+                last_update_user_id = #{lastUpdateUserId},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted},
+            </if>
+        </set>
+        where id = #{id} and corp_id = #{corpId}
+    </update>
+    <sql id="wherePageList">
+        <where>
+            <if test="req.id != null">
+                and id = #{req.id}
+            </if>
+            <if test="req.corpId != null">
+                and corp_id = #{req.corpId}
+            </if>
+            <if test="req.areaTypeId != null">
+                and area_type_id = #{req.areaTypeId}
+            </if>
+            <if test="req.parentId != null">
+                and parent_id = #{req.parentId}
+            </if>
+            <if test="req.areaName != null">
+                and area_name = #{req.areaName}
+            </if>
+            <if test="req.areaCode != null">
+                and area_code = #{req.areaCode}
+            </if>
+            <if test="req.areaCodeDescription != null">
+                and area_code_description = #{req.areaCodeDescription}
+            </if>
+            <if test="req.locations != null">
+                and locations = #{req.locations}
+            </if>
+            <if test="req.areaManager != null">
+                and area_manager = #{req.areaManager}
+            </if>
+            <if test="req.areaManagerJobNumber != null">
+                and area_manager_job_number = #{req.areaManagerJobNumber}
+            </if>
+            <if test="req.createdAt != null">
+                and created_at = #{req.createdAt}
+            </if>
+            <if test="req.updatedAt != null">
+                and updated_at = #{req.updatedAt}
+            </if>
+            <if test="req.createUserId != null">
+                and create_user_id = #{req.createUserId}
+            </if>
+            <if test="req.lastUpdateUserId != null">
+                and last_update_user_id = #{req.lastUpdateUserId}
+            </if>
+            <if test="req.isDeleted != null">
+                and is_deleted = #{req.isDeleted}
+            </if>
+        </where>
+    </sql>
+
+    <select id="pageCount" resultType="Integer">
+        select count(*)
+        from areas
+        <include refid="wherePageList"/>
+    </select>
+
+    <select id="search" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from areas
+        <include refid="wherePageList"/>
+        <if test="page != null">
+            limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+    <select id="queryAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from areas
+        <include refid="wherePageList"/>
+    </select>
+    <select id="nameExist" resultMap="BaseResultMap">
+        select id from areas
+        where corp_id=#{req.corpId}
+        and area_type_id=#{req.areaTypeId}
+        and is_deleted=#{req.isDeleted}
+        and area_name=#{req.areaName}
+        limit 1
+    </select>
+    <select id="areaCodeExist" resultMap="BaseResultMap">
+        select id from areas
+        where corp_id=#{req.corpId}
+        and area_type_id=#{req.areaTypeId}
+        and is_deleted=#{req.isDeleted}
+        and area_code=#{req.areaCode}
+        limit 1
+    </select>
+
+</mapper>

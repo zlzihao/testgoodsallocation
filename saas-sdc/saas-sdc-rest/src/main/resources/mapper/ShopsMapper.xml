@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.sdc.repository.dao.ShopsMapper">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="cn.nome.saas.sdc.repository.entity.ShopsDO" id="BaseResultMap">
+        <id property="id" column="id"/>
+        <result property="corpId" column="corp_id"/>
+        <result property="shopName" column="shop_name"/>
+        <result property="oldShopCode" column="old_shop_code"/>
+        <result property="shopCode" column="shop_code"/>
+        <result property="marketingAreaId" column="marketing_area_id"/>
+        <result property="channelAreaId" column="channel_area_id"/>
+        <result property="plannedOpeningDate" column="planned_opening_date"/>
+        <result property="calcOpeningDate" column="calc_opening_date"/>
+        <result property="openingDate" column="opening_date"/>
+        <result property="plannedClosingDate" column="planned_closing_date"/>
+        <result property="closingDate" column="closing_date"/>
+        <result property="calcClosingDate" column="calc_closing_date"/>
+        <result property="suspendDate" column="suspend_date"/>
+        <result property="shopStateId" column="shop_state_id"/>
+        <result property="shopStateName" column="shop_state_name"/>
+        <result property="shopImage" column="shop_image"/>
+        <result property="enableClothingAllocation" column="enable_clothing_allocation"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="lastUpdateUserId" column="last_update_user_id"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="channelAreaName" column="area_name"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+		id, corp_id, shop_name, old_shop_code, shop_code, marketing_area_id, channel_area_id, planned_opening_date, opening_date, calc_opening_date, planned_closing_date, closing_date, calc_closing_date, suspend_date, shop_state_id, shop_state_name, shop_image, created_at, updated_at, create_user_id, last_update_user_id, is_deleted
+	</sql>
+    <select id="queryRow" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from shops
+        where id = #{req.id} and corp_id = #{req.corpId} and is_deleted = #{req.isDeleted}
+    </select>
+    <select id="queryAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from shops
+        <include refid="wherePageList"/>
+    </select>
+    <insert id="insertSelective" useGeneratedKeys="true" keyProperty="id"
+            parameterType="cn.nome.saas.sdc.repository.entity.ShopsDO">
+        insert into shops
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="corpId != null">
+                corp_id,
+            </if>
+            <if test="shopName != null">
+                shop_name,
+            </if>
+            <if test="oldShopCode != null">
+                old_shop_code,
+            </if>
+            <if test="shopCode != null">
+                shop_code,
+            </if>
+            <if test="marketingAreaId != null">
+                marketing_area_id,
+            </if>
+            <if test="channelAreaId != null">
+                channel_area_id,
+            </if>
+            <if test="plannedOpeningDate != null">
+                planned_opening_date,
+            </if>
+            <if test="openingDate != null">
+                opening_date,
+            </if>
+            <if test="calcOpeningDate != null">
+                calc_opening_date,
+            </if>
+            <if test="plannedClosingDate != null">
+                planned_closing_date,
+            </if>
+            <if test="closingDate != null">
+                closing_date,
+            </if>
+            <if test="calcClosingDate != null">
+                calc_closing_date,
+            </if>
+            <if test="suspendDate != null">
+                suspend_date,
+            </if>
+            <if test="shopStateId != null">
+                shop_state_id,
+            </if>
+            <if test="shopStateName != null">
+                shop_state_name,
+            </if>
+            <if test="shopImage != null">
+                shop_image,
+            </if>
+            <if test="createdAt != null">
+                created_at,
+            </if>
+            <if test="updatedAt != null">
+                updated_at,
+            </if>
+            <if test="createUserId != null">
+                create_user_id,
+            </if>
+            <if test="lastUpdateUserId != null">
+                last_update_user_id,
+            </if>
+            <if test="isDeleted != null">
+                is_deleted,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id},
+            </if>
+            <if test="corpId != null">
+                #{corpId},
+            </if>
+            <if test="shopName != null">
+                #{shopName},
+            </if>
+            <if test="oldShopCode != null">
+                #{oldShopCode},
+            </if>
+            <if test="shopCode != null">
+                #{shopCode},
+            </if>
+            <if test="marketingAreaId != null">
+                #{marketingAreaId},
+            </if>
+            <if test="channelAreaId != null">
+                #{channelAreaId},
+            </if>
+            <if test="plannedOpeningDate != null">
+                #{plannedOpeningDate},
+            </if>
+            <if test="openingDate != null">
+                #{openingDate},
+            </if>
+            <if test="calcOpeningDate != null">
+                #{clacOpeningDate},
+            </if>
+            <if test="plannedClosingDate != null">
+                #{plannedClosingDate},
+            </if>
+            <if test="closingDate != null">
+                #{closingDate},
+            </if>
+            <if test="calcClosingDate != null">
+                #{calcClosingDate},
+            </if>
+            <if test="suspendDate != null">
+                #{suspendDate},
+            </if>
+            <if test="shopStateId != null">
+                #{shopStateId},
+            </if>
+            <if test="shopStateName != null">
+                #{shopStateName},
+            </if>
+            <if test="shopImage != null">
+                #{shopImage},
+            </if>
+            <if test="createdAt != null">
+                #{createdAt},
+            </if>
+            <if test="updatedAt != null">
+                #{updatedAt},
+            </if>
+            <if test="createUserId != null">
+                #{createUserId},
+            </if>
+            <if test="lastUpdateUserId != null">
+                #{lastUpdateUserId},
+            </if>
+            <if test="isDeleted != null">
+                #{isDeleted},
+            </if>
+        </trim>
+    </insert>
+    <update id="resetAreaId" parameterType="cn.nome.saas.sdc.repository.entity.ShopsDO">
+		UPDATE shops SET marketing_area_id = 0, channel_area_id = 0 WHERE corp_id = #{corpId} AND(marketing_area_id = #{marketingAreaId} OR channel_area_id = #{channelAreaId})
+	</update>
+    <update id="update" parameterType="cn.nome.saas.sdc.repository.entity.ShopsDO">
+        update shops
+        <set>
+            <if test="shopName != null">
+                shop_name = #{shopName},
+            </if>
+            <if test="oldShopCode != null">
+                old_shop_code = #{oldShopCode},
+            </if>
+            <if test="shopCode != null">
+                shop_code = #{shopCode},
+            </if>
+            <if test="marketingAreaId != null">
+                marketing_area_id = #{marketingAreaId},
+            </if>
+            <if test="channelAreaId != null">
+                channel_area_id = #{channelAreaId},
+            </if>
+            <if test="plannedOpeningDate != null">
+                planned_opening_date = #{plannedOpeningDate},
+            </if>
+            <if test="openingDate != null">
+                opening_date = #{openingDate},
+            </if>
+            <if test="calcOpeningDate != null">
+                calcOpening_date = #{calcOpeningDate},
+            </if>
+            <if test="plannedClosingDate != null">
+                planned_closing_date = #{plannedClosingDate},
+            </if>
+            <if test="closingDate != null">
+                closing_date = #{closingDate},
+            </if>
+            <if test="calcClosingDate != null">
+                calc_closing_date = #{calcClosingDate},
+            </if>
+            <if test="suspendDate != null">
+                suspend_date = #{suspendDate},
+            </if>
+            <if test="shopStateId != null">
+                shop_state_id = #{shopStateId},
+            </if>
+            <if test="shopStateName != null">
+                shop_state_name = #{shopStateName},
+            </if>
+            <if test="shopImage != null">
+                shop_image = #{shopImage},
+            </if>
+            <if test="createdAt != null">
+                created_at = #{createdAt},
+            </if>
+            <if test="updatedAt != null">
+                updated_at = #{updatedAt},
+            </if>
+            <if test="createUserId != null">
+                create_user_id = #{createUserId},
+            </if>
+            <if test="lastUpdateUserId != null">
+                last_update_user_id = #{lastUpdateUserId},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted},
+            </if>
+        </set>
+        where id = #{id} and corp_id = #{corpId}
+    </update>
+    <sql id="wherePageList">
+        <where>
+            <if test="req.id != null">
+                and id = #{req.id}
+            </if>
+            <if test="req.corpId != null">
+                and corp_id = #{req.corpId}
+            </if>
+            <if test="req.shopName != null">
+                and shop_name = #{req.shopName}
+            </if>
+            <if test="req.oldShopCode != null">
+                and old_shop_code = #{req.oldShopCode}
+            </if>
+            <if test="req.shopCode != null">
+                and shop_code = #{req.shopCode}
+            </if>
+            <if test="req.marketingAreaId != null">
+                and marketing_area_id = #{req.marketingAreaId}
+            </if>
+            <if test="req.marketingAreaIds != null">
+                <foreach collection="req.marketingAreaIds" item="marketingAreaId" open="and marketing_area_id in ("
+                         close=")" separator=",">
+                    #{marketingAreaId}
+                </foreach>
+            </if>
+            <if test="req.channelAreaId != null">
+                and channel_area_id = #{req.channelAreaId}
+            </if>
+            <if test="req.channelAreaIds != null">
+                <foreach collection="req.channelAreaIds" item="channelAreaId" open="and channel_area_id in (" close=")"
+                         separator=",">
+                    #{channelAreaId}
+                </foreach>
+            </if>
+            <if test="req.plannedOpeningDate != null">
+                and planned_opening_date = #{req.plannedOpeningDate}
+            </if>
+            <if test="req.openingDate != null">
+                and opening_date = #{req.openingDate}
+            </if>
+            <if test="req.calcOpeningDate != null">
+                and calc_opening_date = #{req.calcOpeningDate}
+            </if>
+            <if test="req.plannedClosingDate != null">
+                and planned_closing_date = #{req.plannedClosingDate}
+            </if>
+            <if test="req.closingDate != null">
+                and closing_date = #{req.closingDate}
+            </if>
+            <if test="req.calcClosingDate != null">
+                and calc_closing_date = #{req.calcClosingDate}
+            </if>
+            <if test="req.suspendDate != null">
+                and suspend_date = #{req.suspendDate}
+            </if>
+            <if test="req.shopStateId != null">
+                and shop_state_id = #{req.shopStateId}
+            </if>
+            <if test="req.shopStateName != null">
+                and shop_state_name = #{req.shopStateName}
+            </if>
+            <if test="req.shopImage != null">
+                and shop_image = #{req.shopImage}
+            </if>
+            <if test="req.createdAt != null">
+                and created_at = #{req.createdAt}
+            </if>
+            <if test="req.updatedAt != null">
+                and updated_at = #{req.updatedAt}
+            </if>
+            <if test="req.createUserId != null">
+                and create_user_id = #{req.createUserId}
+            </if>
+            <if test="req.lastUpdateUserId != null">
+                and last_update_user_id = #{req.lastUpdateUserId}
+            </if>
+            <if test="req.isDeleted != null">
+                and is_deleted = #{req.isDeleted}
+            </if>
+            <if test="req.ids != null">
+                <foreach collection="req.ids" item="id" open="and id in (" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </sql>
+
+    <select id="pageCount" resultType="Integer">
+        select count(*)
+        from shops
+        <include refid="wherePageList"/>
+    </select>
+
+    <select id="search" resultMap="BaseResultMap">
+        select
+        t.id, t.corp_id, t.shop_name, t.old_shop_code, t.shop_code, t.marketing_area_id, t.channel_area_id, t.planned_opening_date,
+        t.opening_date, t.calc_opening_date, t.planned_closing_date, t.closing_date, t.calc_closing_date, t.suspend_date,
+        t.shop_state_id, t.shop_state_name, t.shop_image, t.enable_clothing_allocation, t.created_at, t.updated_at,t.create_user_id, t.last_update_user_id,
+        t.is_deleted,t1.area_name as area_name from shops t left join areas t1 on t.channel_area_id=t1.id
+        <where>
+            <if test="req.id != null">
+                and t.id = #{req.id}
+            </if>
+            <if test="req.corpId != null">
+                and t.corp_id = #{req.corpId}
+            </if>
+            <if test="req.shopName != null">
+                and t.shop_name = #{req.shopName}
+            </if>
+            <if test="req.oldShopCode != null">
+                and t.old_shop_code = #{req.oldShopCode}
+            </if>
+            <if test="req.shopCode != null">
+                and t.shop_code = #{req.shopCode}
+            </if>
+            <if test="req.marketingAreaId != null">
+                and t.marketing_area_id = #{req.marketingAreaId}
+            </if>
+            <if test="req.marketingAreaIds != null">
+                <foreach collection="req.marketingAreaIds" item="marketingAreaId" open="and t.marketing_area_id in ("
+                         close=")" separator=",">
+                    #{marketingAreaId}
+                </foreach>
+            </if>
+            <if test="req.channelAreaId != null">
+                and t.channel_area_id = #{req.channelAreaId}
+            </if>
+            <if test="req.channelAreaIds != null">
+                <foreach collection="req.channelAreaIds" item="channelAreaId" open="and t.channel_area_id in (" close=")"
+                         separator=",">
+                    #{channelAreaId}
+                </foreach>
+            </if>
+            <if test="req.plannedOpeningDate != null">
+                and t.planned_opening_date = #{req.plannedOpeningDate}
+            </if>
+            <if test="req.openingDate != null">
+                and t.opening_date = #{req.openingDate}
+            </if>
+            <if test="req.calcOpeningDate != null">
+                and t.calc_opening_date = #{req.calcOpeningDate}
+            </if>
+            <if test="req.plannedClosingDate != null">
+                and t.planned_closing_date = #{req.plannedClosingDate}
+            </if>
+            <if test="req.closingDate != null">
+                and t.closing_date = #{req.closingDate}
+            </if>
+            <if test="req.calcClosingDate != null">
+                and t.calc_closing_date = #{req.calcClosingDate}
+            </if>
+            <if test="req.suspendDate != null">
+                and t.suspend_date = #{req.suspendDate}
+            </if>
+            <if test="req.shopStateId != null">
+                and t.shop_state_id = #{req.shopStateId}
+            </if>
+            <if test="req.shopStateName != null">
+                and t.shop_state_name = #{req.shopStateName}
+            </if>
+            <if test="req.shopImage != null">
+                and t.shop_image = #{req.shopImage}
+            </if>
+            <if test="req.createdAt != null">
+                and t.created_at = #{req.createdAt}
+            </if>
+            <if test="req.updatedAt != null">
+                and t.updated_at = #{req.updatedAt}
+            </if>
+            <if test="req.createUserId != null">
+                and t.create_user_id = #{req.createUserId}
+            </if>
+            <if test="req.lastUpdateUserId != null">
+                and t.last_update_user_id = #{req.lastUpdateUserId}
+            </if>
+            <if test="req.isDeleted != null">
+                and t.is_deleted = #{req.isDeleted}
+            </if>
+            <if test="req.ids != null">
+                <foreach collection="req.ids" item="id" open="and t.id in (" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        <if test="page != null">
+            limit #{page.offset,jdbcType=INTEGER}, #{page.pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+    <update id="clearMarkingArea" parameterType="cn.nome.saas.sdc.repository.entity.ShopsDO">
+		update shops set marketing_area_id=#{marketingAreaId} where corp_id=#{corpId}
+	</update>
+
+    <update id="batchUpdate" parameterType="java.util.List">
+        <foreach collection="list" item="record" index="index" separator=";">
+            update shops
+            <set>
+                    opening_date = #{record.openingDate},
+                    closing_date = #{record.closingDate},
+                    shop_state_name = #{record.shopStateName}
+            </set>
+            where shop_code = #{record.shopCode} and corp_id = #{record.corpId}
+        </foreach>
+    </update>
+
+</mapper>

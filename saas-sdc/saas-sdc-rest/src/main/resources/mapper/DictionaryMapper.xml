@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.sdc.repository.dao.DictionaryMapper">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="cn.nome.saas.sdc.repository.entity.DictionaryDO" id="BaseResultMap">
+        <result property="id" column="item_code"/>
+        <result property="name" column="item_name"/>
+        <result property="sortOrder" column="item_sort_order"/>
+        <result property="isEnable" column="is_enable"/>
+    </resultMap>
+    <select id="query" resultMap="BaseResultMap">
+        SELECT
+            items.item_code,
+            items.item_name,
+            items.item_sort_order,
+            items.is_enable
+        FROM
+            dictionary_items AS items
+            LEFT JOIN dictionary_types AS types ON items.dictionary_type_id = types.id
+        WHERE
+            types.dictionary_code = #{dictionaryCode}
+    </select>
+
+</mapper>

@@ -1,0 +1,8 @@
+.idea
+.DS_Store
+*.iml
+.project
+config-cache
+saas-sdc-api/target/
+saas-sdc-rest/target/
+application-local.yml

@@ -1,0 +1,118 @@
+debug: true
+spring:
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 128MB
+            max-request-size: 128MB
+    application:
+        name: sdc
+    cloud:
+        consul:
+            host: ${NM_CONSUL_HOST:127.0.0.1}
+            port: ${NM_CONSUL_PORT:8500}
+        discovery:
+            health-check-interval: 30s
+            health-check-timeout: 10s
+            enabled: true
+            instance-id: sdc
+            service-name: sdc
+    jackson:
+        date-format: yyyy-MM-dd HH:mm:ss
+        time-zone: GMT+8
+        default-property-inclusion: non_null
+    #读写分离
+    db-master:
+        name: test
+        url: jdbc:mysql://${MYSQL_HOST:gz-cdb-qdpjjjmr.sql.tencentcdb.com}:${MYSQL_PORT:62051}/saas_sdc?useUnicode=true&characterEncoding=UTF8
+        username: ${URANUS_MYSQL_MASTER_USERNAME:root}
+        password: ${URANUS_MYSQL_MASTER_PASSWORD:KMadmin123!}
+        driver-class-name: com.mysql.jdbc.Driver
+        maxActive: 20
+        initialSize: 5
+        maxWait: 3000
+        minIdle: 5
+        timeBetweenEvictionRunsMillis: 6000
+        minEvictableIdleTimeMillis: 30000
+        validationQuery: select 'x'
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        poolPreparedStatements: true
+        maxOpenPreparedStatements: 20
+    db-slave:
+        name: test
+        url: jdbc:mysql://${MYSQL_HOST:gz-cdb-qdpjjjmr.sql.tencentcdb.com}:${MYSQL_PORT:62051}/saas_sdc?useUnicode=true&characterEncoding=UTF8
+        username: ${URANUS_MYSQL_SLAVE_USERNAME:root}
+        password: ${URANUS_MYSQL_SLAVE_PASSWORD:KMadmin123!}
+        driver-class-name: com.mysql.jdbc.Driver
+        maxActive: 20
+        initialSize: 5
+        maxWait: 3000
+        minIdle: 5
+        timeBetweenEvictionRunsMillis: 6000
+        minEvictableIdleTimeMillis: 30000
+        validationQuery: select 'x'
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        poolPreparedStatements: true
+        maxOpenPreparedStatements: 20
+    redis:
+    # Redis服务器地址
+        host: ${NM_REDIS_HOST:193.112.111.126}
+    # Redis服务器连接端口
+        port: ${NM_REDIS_PORT:6379}
+        database: 0
+        jedis:
+            pool:
+                max-active: 300
+              # 连接池最大阻塞等待时间（使用负值表示没有限制）
+                max-wait: -1
+              # 连接池中的最大空闲连接
+                max-idle: 300
+              # 连接池中的最小空闲连接
+                min-idle: 50
+            commandTimeout: 5000
+        password: ${NM_REDIS_PASSWORD:crs-litpd7r1:nmredis666}
+mybatis:
+    basepackage: cn.nome.saas.sdc.repository.dao
+    mapper-locations: "classpath*:mapper/**/*.xml"
+ribbon:
+    ConnectionTimeout: 2000
+    ReadTimeout: 5000
+    MaxAutoRetries: 1
+    MaxAutoRetriesNextServer: 1
+    OkToRetryOnAllOperations: true
+hystrix:
+    command:
+        default:
+            execution:
+                isolation:
+                    thread:
+                        timeoutInMilliseconds: 5500
+server:
+    port: ${NM_SERVICE_PORT:9001} #启动端口
+    tomcat:
+        max-connections: 1000 # 默认值
+        max-threads: 1000 # 默认值
+        accesslog:
+            buffered: true
+            directory: ${ACCESS_LOG_PATH:/nmapps/logs/java/pd-sdc}
+            enabled: true
+            pattern: "%a|%A|%p|%t|'%r'|'HEADER-NOME-CorpID:%{HEADER-NOME-CorpID}i'|'HEADER-NOME-AppID:%{HEADER-NOME-AppID}i'|'HEADER-NOME-UID:%{HEADER-NOME-UID}i'|%s|%Dms|%I|'User-Agent:%{User-Agent}i'|'Referer:%{Referer}i'"
+            prefix: ${ACCESS_LOG_NAME:access_log}
+            suffix: .log
+            buffered: true
+            file-date-format: .yyyy-MM-dd
+            request-attributes-enabled: false
+            rename-on-rotate: true
+logging:
+    level:
+        #root: DEBUG
+        #org.springframework.web: DEBUG
+        org.springframework.cloud.consul: DEBUG
+        cn.nome.saas: DEBUG
+    file: ${LOG_FILE_PATH:/home/log/sdc/pd-sdc.log}
+    pattern:
+        file: "%d{yyyy-MM-dd HH:mm:ss}|[%thread]|%-5level|%logger-|[TxId:%X{PtxId},SpanId:%X{PspanId}]|%msg%n"

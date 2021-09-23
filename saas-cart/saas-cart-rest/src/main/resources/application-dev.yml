@@ -1,0 +1,182 @@
+spring:
+    application:
+        name: pd-cart
+    cloud:
+        consul:
+          host: 127.0.0.1
+#          host: 192.168.13.122
+          port: 8500
+        discovery:
+          enabled: true
+          instance-id: pd-cart
+          service-name: pd-cart
+    jackson:
+        date-format: yyyy-MM-dd HH:mm:ss
+        time-zone: GMT+8
+        default-property-inclusion: non_null
+    datasource:
+      name: test
+      #url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/saas_cart?useUnicode=true&characterEncoding=UTF8&useSSL=false
+      url: jdbc:mysql://${MYSQL_HOST:gz-cdb-qdpjjjmr.sql.tencentcdb.com}:${MYSQL_PORT:62051}/saas_cart?useUnicode=true&characterEncoding=UTF8
+      username: root
+      password: KMadmin123!
+      # 使用druid数据源
+      type: com.alibaba.druid.pool.DruidDataSource
+      driver-class-name: com.mysql.jdbc.Driver
+      filters: stat
+      maxActive: 20
+      initialSize: 1
+      maxWait: 60000
+      minIdle: 1
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: select 'x'
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxOpenPreparedStatements: 20
+
+    redis:
+    # Redis服务器地址
+        host: 193.112.111.126
+    # Redis服务器连接端口
+        port: 6379
+        database: 0
+    #port: 7001
+        jedis:
+            pool:
+              max-active: 300
+              # 连接池最大阻塞等待时间（使用负值表示没有限制）
+              max-wait: -1
+              # 连接池中的最大空闲连接
+              max-idle: 300
+              # 连接池中的最小空闲连接
+              min-idle: 50
+            commandTimeout: 5000
+        password: nmredis666
+#    redis:
+#      password:
+#      cluster:
+#        max-redirects: 3
+#        #nodes: 172.16.2.37:6379,172.16.2.37:6380,172.16.2.38:6379,172.16.2.38:6380,172.16.2.39:6379,172.16.2.39:6380
+#        #nodes: 172.16.2.37:6379,172.16.2.37:6380,172.16.2.38:6379,172.16.2.38:6380,172.16.2.39:6379,172.16.2.39:6380
+#        nodes: 118.89.46.102:7001,118.89.46.102:7002,118.89.46.102:7003,118.89.46.102:7101,118.89.46.102:7102,118.89.46.102:7103
+#    timeout: 5000
+#    jedis:
+#      pool:
+#        max-active: 300
+#        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+#        max-wait: -1
+#        # 连接池中的最大空闲连接
+#        max-idle: 300
+#        # 连接池中的最小空闲连接
+#        min-idle: 50
+#      commandTimeout: 5000
+
+dbsharding:
+  table:
+    strategyname: default
+    tables: cart_item,cart
+    sharding-number: 32
+
+mybatis:
+    basepackage: cn.nome.saas.cart.repository.dao
+    mapper-locations: "classpath*:mapper/**/*.xml"
+
+server:
+    port: 8007 #启动端口
+    tomcat:
+      max-connections: 200 # 默认值
+      max-threads: 200 # 默认值
+      accesslog:
+        directory: D:/home/log/cart
+        enabled: true
+        pattern: "%a %A %p '%r' %s %t %U %v %Dms %I 'Referer:%{Referer}i' 'User-Agent:%{User-Agent}i' 'HEADER-NOME-CorpID:%{HEADER-NOME-CorpID}i' 'HEADER-NOME-AppID:%{HEADER-NOME-AppID}i' 'HEADER-NOME-UID:%{HEADER-NOME-UID}i'"
+        prefix: access_log
+        suffix: .log
+        buffered: true
+        file-date-format: .yyyy-MM-dd
+        request-attributes-enabled: false
+        rename-on-rotate: true
+
+logging:
+  level:
+    root: info
+#    org.springframework.web: DEBUG
+#    org.springframework.cloud.consul: DEBUG
+    cn.nome.saas.cart: info
+    cn.nome.platform.common.shard: info
+  file: /home/log/cart/pd-cart.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss}|[%thread]|%-5level|%logger-|[TxId:%X{PtxId},SpanId:%X{PspanId}]|%msg%n"
+
+executor:
+  corePoolSize: 8
+  maxPoolSize: 20
+  queueCapacity: 1000
+  keepAliveSeconds: 60
+  threadNamePrefix: taskExecutor-
+
+#自定义属性
+#单位秒
+CACHE_CART_SKU_DEFAULT_EXPIRE_TIME: 3600
+#单位分钟，3天
+CACHE_NG_TIME_DEFAULT_VAL: 4320
+#单位分钟，5天
+CACHE_YG_TIME_DEFAULT_VAL: 7200
+
+# ====================redis====================
+#redis 集群配置
+
+#redis:
+## Redis服务器地址
+##  host: 127.0.0.1
+#  #host: 118.89.46.102
+## Redis服务器连接端口
+##  port: 6379
+#  #port: 7001
+#  cluster:
+#    max-redirects: 3
+#    #nodes: 172.16.2.37:6379,172.16.2.37:6380,172.16.2.38:6379,172.16.2.38:6380,172.16.2.39:6379,172.16.2.39:6380
+#    #nodes: 172.16.2.37:6379,172.16.2.37:6380,172.16.2.38:6379,172.16.2.38:6380,172.16.2.39:6379,172.16.2.39:6380
+#    nodes: 118.89.46.102:7001,118.89.46.102:7002,118.89.46.102:7003,118.89.46.102:7004,118.89.46.102:7005,118.89.46.102:7006
+## Redis服务器连接密码（默认为空）
+#  password:
+## 连接超时时间（毫秒）
+#  timeout: 0
+## Redis数据库索引（默认为0）
+#  database: 0
+#  commandTimeout: 5000
+## 连接池最大连接数（使用负值表示没有限制）
+#  pool:
+#    max-active: 8
+## 连接池最大阻塞等待时间（使用负值表示没有限制）
+#    max-wait: -1
+## 连接池中的最大空闲连接
+#    max-idle: 8
+## 连接池中的最小空闲连接
+#    min-idle: 0
+
+ribbon:
+  ConnectionTimeout: 2000
+  ReadTimeout: 5000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+  OkToRetryOnAllOperations: true
+
+hystrix:
+ command:
+  default:
+   execution:
+    isolation:
+     thread:
+       timeoutInMilliseconds: 5500
+
+
+#测试集成platform-kafka
+clouds.mq.nomeKafka.config.groupId: cart
+clouds.mq.nomeKafka.config.bizType: wxShoppingList
+clouds.mq.nomeKafka.config.topics: app_log,pollTopic,wxShoppingList
+clouds.mq.nomeKafka.config.bootstrap.servers: 193.112.111.126:9092
+clouds.mq.nomeKafka.config.max.poll.records: 1

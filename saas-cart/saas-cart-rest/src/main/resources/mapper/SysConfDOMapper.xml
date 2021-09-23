@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.nome.saas.cart.repository.dao.SysConfDOMapper">
+
+    <resultMap id="BaseResultMap" type="cn.nome.saas.cart.repository.entity.SysConfDO">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="key_name" property="keyName" jdbcType="VARCHAR"/>
+        <result column="key_code" property="keyCode" jdbcType="VARCHAR"/>
+        <result column="key_val" property="keyVal" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="created_by" property="createdBy" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, key_name, key_code, key_val, status, created_at, updated_at, created_by, remark
+  </sql>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        select
+        <include refid="Base_Column_List"/>
+        from sys_conf
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+
+    <select id="selectConfByStatus" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        select
+        <include refid="Base_Column_List"/>
+        from sys_conf
+        where status = #{status,jdbcType=INTEGER}
+    </select>
+    
+    <select id="selectByKeyCode" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from sys_conf
+        where key_code = #{keyCode,jdbcType=VARCHAR} AND status = 1
+    </select>
+    
+    <select id="selectOneByKeyCode" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from sys_conf
+        where key_code = #{keyCode,jdbcType=VARCHAR} AND status = 1
+    </select>
+    
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from sys_conf
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+    <insert id="insert" parameterType="cn.nome.saas.cart.repository.entity.SysConfDO">
+    insert into sys_conf (id, key_name, key_code, 
+      key_val, status, created_at, 
+      updated_at, created_by, remark
+      )
+    values (#{id,jdbcType=INTEGER}, #{keyName,jdbcType=VARCHAR}, #{keyCode,jdbcType=VARCHAR}, 
+      #{keyVal,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
+      #{updatedAt,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR}
+      )
+  </insert>
+
+    <insert id="insertSelective" parameterType="cn.nome.saas.cart.repository.entity.SysConfDO">
+        insert into sys_conf
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="keyName != null">
+                key_name,
+            </if>
+            <if test="keyCode != null">
+                key_code,
+            </if>
+            <if test="keyVal != null">
+                key_val,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="createdAt != null">
+                created_at,
+            </if>
+            <if test="updatedAt != null">
+                updated_at,
+            </if>
+            <if test="createdBy != null">
+                created_by,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="keyName != null">
+                #{keyName,jdbcType=VARCHAR},
+            </if>
+            <if test="keyCode != null">
+                #{keyCode,jdbcType=VARCHAR},
+            </if>
+            <if test="keyVal != null">
+                #{keyVal,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                #{status,jdbcType=INTEGER},
+            </if>
+            <if test="createdAt != null">
+                #{createdAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updatedAt != null">
+                #{updatedAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createdBy != null">
+                #{createdBy,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                #{remark,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="cn.nome.saas.cart.repository.entity.SysConfDO">
+        update sys_conf
+        <set>
+            <if test="keyName != null">
+                key_name = #{keyName,jdbcType=VARCHAR},
+            </if>
+            <if test="keyCode != null">
+                key_code = #{keyCode,jdbcType=VARCHAR},
+            </if>
+            <if test="keyVal != null">
+                key_val = #{keyVal,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=INTEGER},
+            </if>
+            <if test="createdAt != null">
+                created_at = #{createdAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updatedAt != null">
+                updated_at = #{updatedAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createdBy != null">
+                created_by = #{createdBy,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="cn.nome.saas.cart.repository.entity.SysConfDO">
+    update sys_conf
+    set key_name = #{keyName,jdbcType=VARCHAR},
+      key_code = #{keyCode,jdbcType=VARCHAR},
+      key_val = #{keyVal,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      created_at = #{createdAt,jdbcType=TIMESTAMP},
+      updated_at = #{updatedAt,jdbcType=TIMESTAMP},
+      created_by = #{createdBy,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+</mapper>

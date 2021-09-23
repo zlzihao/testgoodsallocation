@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.sdc.bigData.repository.dao.DwsGoalDayShopCategoryMapper">
+    <resultMap type="cn.nome.saas.sdc.bigData.repository.entity.DwsGoalDayShopCategoryDO" id="BaseResultMap">
+        <result property="categoryCode" column="CategoryCode"/>
+        <result property="shopCode" column="shopcode"/>
+        <result property="shopId" column="ShopID"/>
+        <result property="categoryName" column="CategoryName"/>
+        <result property="goalDay" column="GoalDay"/>
+        <result property="operationDate" column="OperationDate"/>
+    </resultMap>
+
+    <select id="getGoalDay" resultMap="BaseResultMap">
+        select OperationDate,ShopID,shopcode,CategoryCode,CategoryName,GoalDay
+        from dws.dws_goalday_shop_category
+        where (CategoryCode='M' OR CategoryCode='W')
+          <if test="list !=null and  list.size()>0">
+             and
+            <foreach collection="list" index="index" item="record" separator="or" open="(" close=")">
+                  <![CDATA[ OperationDate +7>= #{record.seasonsAlternateDay,jdbcType=TIMESTAMP}]]>
+                  <![CDATA[ and OperationDate -7<= #{record.seasonsAlternateDay,jdbcType=TIMESTAMP}]]>
+              </foreach>
+          </if>
+
+    </select>
+</mapper>

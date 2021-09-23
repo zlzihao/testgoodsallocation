@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.nome.saas.sdc.repository.dao.ShopMappingPositionMapper">
+
+    <resultMap id="baseResult" type="cn.nome.saas.sdc.repository.entity.ShopMappingPositionDO">
+        <id property="id" column="id"/>
+        <result property="shopCode" column="shop_code"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="positionCoefficient" column="position_coefficient"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createAt" column="create_at"/>
+        <result property="updateAt" column="update_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <insert id="batchInsert" parameterType="list">
+        insert into shop_mapping_position(
+        shop_code,
+        category_id,
+        position_coefficient,
+        create_time,
+        create_at) values
+        <foreach collection="list" index="index" item="record" separator=",">
+            (#{record.shopCode},
+            #{record.categoryId},
+            #{record.positionCoefficient},
+            #{record.createTime},
+            #{record.createAt}
+            )
+        </foreach>
+
+    </insert>
+
+    <update id="batchUpdate" parameterType="list">
+        <foreach collection="list" index="index" item="record" separator=";">
+            update shop_mapping_position
+            <set>
+                <if test="record.id !=null">
+                    id=#{record.id},
+                </if>
+                <if test="record.shopCode !=null">
+                    shop_code=#{record.shopCode},
+                </if>
+                <if test="record.categoryId !=null">
+                    category_id=#{record.categoryId},
+                </if>
+                <if test="record.positionCoefficient !=null">
+                    position_coefficient=#{record.positionCoefficient},
+                </if>
+                <if test="record.createTime !=null">
+                    create_time=#{record.createTime},
+                </if>
+                <if test="record.updateTime !=null">
+                    update_time=#{record.updateTime},
+                </if>
+                <if test="record.createAt!=null">
+                    create_at=#{record.createAt},
+                </if>
+                <if test="record.updateAt!=null">
+                    update_at=#{record.updateAt},
+                </if>
+                <if test="record.isDeleted!=null">
+                    is_deleted=#{record.isDeleted},
+                </if>
+            </set>
+            where is_deleted=0 and shop_code=#{record.shopCode} and category_id=#{record.categoryId}
+        </foreach>
+    </update>
+
+    <select id="selectByCondition" resultMap="baseResult">
+        select id,shop_code,category_id,position_coefficient,create_time,update_time,create_at,update_at,is_deleted
+        from shop_mapping_position
+        where is_deleted=0
+        <foreach collection="list" item="record" index="index">
+            <if test="record.shopCode!=null">
+                and shop_code=#{record.shopCode}
+            </if>
+            <if test="record.categoryId!=null">
+                and category_id=#{record.categoryId}
+            </if>
+        </foreach>
+    </select>
+</mapper>
